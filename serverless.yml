@@ -1,0 +1,48 @@
+service: s3select
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: eu-central-1
+  deploymentBucket:
+    name: learning-serverless
+  stackTags:
+    Env: ${self:provider.stage}
+  iamRoleStatements:
+  - Effect: Allow
+    Resource: "*"
+    Action:
+    - s3:*
+  environment:
+    select_bucket: analytics-s3l3ct
+custom:
+  serviceId: ${self:service}-${self:provider.stage}
+  select_bucket: ${self:provider.environment.select_bucket}
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+functions:
+  createS3:
+    handler: create.create
+    events:
+    - http:
+        path: create
+        method: get
+
+resources:
+ Resources:
+   NewResource:
+     Type: AWS::S3::Bucket
+     Properties:
+       BucketName: ${self:custom.select_bucket}
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
