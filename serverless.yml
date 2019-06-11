@@ -3,7 +3,7 @@ service: s3select
 provider:
   name: aws
   runtime: nodejs6.10
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: eu-central-1
   deploymentBucket:
     name: learning-serverless
@@ -19,14 +19,6 @@ provider:
 custom:
   serviceId: ${self:service}-${self:provider.stage}
   select_bucket: ${self:provider.environment.select_bucket}
-# you can add packaging information here
-#package:
-#  include:
-#    - include-me.js
-#    - include-me-dir/**
-#  exclude:
-#    - exclude-me.js
-#    - exclude-me-dir/**
 
 functions:
   createS3:
@@ -42,7 +34,3 @@ resources:
      Type: AWS::S3::Bucket
      Properties:
        BucketName: ${self:custom.select_bucket}
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
