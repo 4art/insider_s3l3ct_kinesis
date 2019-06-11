@@ -1,36 +1,84 @@
-service: s3select
+service: insider
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs8.10
   stage: ${opt:stage, 'dev'}
   region: eu-central-1
   deploymentBucket:
     name: learning-serverless
-  stackTags:
-    Env: ${self:provider.stage}
   iamRoleStatements:
   - Effect: Allow
     Resource: "*"
     Action:
     - s3:*
+    - firehose:*
   environment:
-    select_bucket: analytics-s3l3ct
+    select_bucket: ${self:custom.select_bucket}
+    deliveryStreamDE: insider-de-stream-${self:provider.stage}
+
 custom:
   serviceId: ${self:service}-${self:provider.stage}
-  select_bucket: ${self:provider.environment.select_bucket}
+  select_bucket: insider-transactions-${self:provider.stage}
+  deliveryStreamDE: insider-de-stream-${self:provider.stage}
 
 functions:
   createS3:
-    handler: create.create
+    handler: s3select.create
     events:
     - http:
         path: create
         method: get
+  putToStream:
+    handler: fhController.putToStream
+    events:
+    - http:
+        path: put
+        method: get
 
 resources:
- Resources:
-   NewResource:
-     Type: AWS::S3::Bucket
-     Properties:
+  Resources:
+    InsiderBucket:
+      Type: AWS::S3::Bucket
+      Properties:
        BucketName: ${self:custom.select_bucket}
+    InsiderDeKinesisFirehose:
+      Type: AWS::KinesisFirehose::DeliveryStream
+      Properties:
+        DeliveryStreamName: ${self:custom.deliveryStreamDE}
+        S3DestinationConfiguration:
+          BucketARN: 
+            Fn::GetAtt: [ InsiderBucket, Arn ]
+          BufferingHints:
+            IntervalInSeconds: "60"
+            SizeInMBs: "1"
+          CompressionFormat: "GZIP"
+          Prefix: "DE/"
+          RoleARN:
+            Fn::GetAtt: [ FirehoseToS3Role, Arn ]
+    FirehoseToS3Role:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: FirehoseToS3Role
+        AssumeRolePolicyDocument:
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - firehose.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Policies:
+        - PolicyName: FirehoseToS3Policy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:PutObject
+              - firehose:PutRecord
+              Resource: '*'
