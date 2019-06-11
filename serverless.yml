@@ -35,20 +35,25 @@ functions:
     - http:
         path: put
         method: get
+  firehoseEvents:
+    handler: firehoseEvents.handler
+    events:
+      - s3:
+          bucket: ${self:custom.select_bucket}
+          event: s3:ObjectCreated:*
 
 resources:
   Resources:
-    InsiderBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-       BucketName: ${self:custom.select_bucket}
     InsiderDeKinesisFirehose:
       Type: AWS::KinesisFirehose::DeliveryStream
       Properties:
         DeliveryStreamName: ${self:custom.deliveryStreamDE}
         S3DestinationConfiguration:
-          BucketARN: 
-            Fn::GetAtt: [ InsiderBucket, Arn ]
+          BucketARN:
+            Fn::Join:
+            - ''
+            - - 'arn:aws:s3:::'
+              - Ref: S3BucketInsidertransactions${self:provider.stage}
           BufferingHints:
             IntervalInSeconds: "60"
             SizeInMBs: "1"
