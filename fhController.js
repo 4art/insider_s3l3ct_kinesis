@@ -4,7 +4,7 @@ const companies = require('./companies')
 const fhService = require('./service/fhService')
 
 module.exports.putToStream = (event, context, callback) => {
-  fhService.putToStream(process.env.deliveryStreamDE, companies).then(e => {
+  fhService.putToStreamBatch(process.env.deliveryStreamDE, companies).then(e => {
     const response = {
       statusCode: 200,
       body: JSON.stringify({

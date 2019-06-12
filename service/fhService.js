@@ -23,5 +23,22 @@ exports.putToStream = (stream, obj) => {
       }
     });
   })
-
+}
+exports.putToStreamBatch = (stream, arr = []) => {
+  var params = {
+    DeliveryStreamName: stream,
+    Records: arr.map(v => ({Data: JSON.stringify(v)}))
+  };
+  return new Promise((res, rej) => {
+    firehose.putRecordBatch(params, function (err, data) {
+      if (err) {
+        console.log(err, err.stack); // an error occurred
+        rej(err)
+      }
+      else {
+        console.log(data);
+        res(data)
+      }
+    });
+  })
 }
