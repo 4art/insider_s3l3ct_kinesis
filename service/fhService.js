@@ -4,41 +4,16 @@ const
   AWS = require('aws-sdk'),
   firehose = new AWS.Firehose();
 
-exports.putToStream = (stream, obj) => {
-  var params = {
+exports.putToStream = (stream, obj) =>
+  firehose.putRecord({
     DeliveryStreamName: stream,
     Record: {
       Data: JSON.stringify(obj)
     }
-  };
-  return new Promise((res, rej) => {
-    firehose.putRecord(params, function (err, data) {
-      if (err) {
-        console.log(err, err.stack); // an error occurred
-        rej(err)
-      }
-      else {
-        console.log(data);
-        res(data)
-      }
-    });
-  })
-}
-exports.putToStreamBatch = (stream, arr = []) => {
-  var params = {
+  }).promise();
+
+exports.putToStreamBatch = (stream, arr = []) =>
+  firehose.putRecordBatch({
     DeliveryStreamName: stream,
-    Records: arr.map(v => ({Data: JSON.stringify(v)}))
-  };
-  return new Promise((res, rej) => {
-    firehose.putRecordBatch(params, function (err, data) {
-      if (err) {
-        console.log(err, err.stack); // an error occurred
-        rej(err)
-      }
-      else {
-        console.log(data);
-        res(data)
-      }
-    });
-  })
-}
+    Records: arr.map(v => ({ Data: JSON.stringify(v) }))
+  }).promise();

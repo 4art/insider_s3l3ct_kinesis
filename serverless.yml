@@ -13,14 +13,17 @@ provider:
     Action:
     - s3:*
     - firehose:*
+    - glue:*
   environment:
     select_bucket: ${self:custom.select_bucket}
-    deliveryStreamDE: insider-de-stream-${self:provider.stage}
+    deliveryStreamDE: ${self:custom.deliveryStreamDE}
+    insiderDBGlue: ${self:custom.insiderDBGlue}
 
 custom:
   serviceId: ${self:service}-${self:provider.stage}
   select_bucket: insider-transactions-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
+  insiderDBGlue: insider-de-database-glue-${self:provider.stage}
 
 functions:
   createS3:
@@ -41,6 +44,8 @@ functions:
       - s3:
           bucket: ${self:custom.select_bucket}
           event: s3:ObjectCreated:*
+  glueCustomResorce:
+    handler: glueCustomResorce.handler
 
 resources:
   Resources:
@@ -87,3 +92,8 @@ resources:
               - s3:PutObject
               - firehose:PutRecord
               Resource: '*'
+    GlueCustomResources:
+      Type: Custom::GlueCustomResource
+      Properties:
+        ServiceToken:
+          Fn::GetAtt: [GlueCustomResorceLambdaFunction, Arn]

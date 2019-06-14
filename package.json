@@ -11,7 +11,6 @@
   "dependencies": {
     "asyncawait": "^1.0.8",
     "aws-sdk": "^2.441.0",
-    "lambda-tester": "^3.5.0",
-    "npm": "^6.9.0"
+    "lambda-tester": "^3.5.0"
   }
 }
