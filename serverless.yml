@@ -44,8 +44,8 @@ functions:
       - s3:
           bucket: ${self:custom.select_bucket}
           event: s3:ObjectCreated:*
-  glueCustomResorce:
-    handler: glueCustomResorce.handler
+  glueCustomResource:
+    handler: glueCustomResource.handler
 
 resources:
   Resources:
@@ -96,4 +96,4 @@ resources:
       Type: Custom::GlueCustomResource
       Properties:
         ServiceToken:
-          Fn::GetAtt: [GlueCustomResorceLambdaFunction, Arn]
+          Fn::GetAtt: [GlueCustomResourceLambdaFunction, Arn]
