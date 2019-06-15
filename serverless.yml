@@ -26,7 +26,7 @@ custom:
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
 
 functions:
-  createS3:
+  createS3: #use cron
     handler: s3select.create
     events:
     - http:
@@ -34,6 +34,7 @@ functions:
         method: get
   putToStream:
     handler: fhController.putToStream
+    timeout: 300
     events:
     - http:
         path: put

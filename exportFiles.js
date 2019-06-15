@@ -3,7 +3,6 @@ const fhService = require('./service/fhService')
 
 module.exports.DE = async event => {
     let transactions = await transactionsService.DE()
-    console.log(transactions)
     return {
         statusCode: 200,
         body: JSON.stringify({

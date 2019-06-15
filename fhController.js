@@ -3,8 +3,7 @@ const fhService = require('./service/fhService')
 
 module.exports.putToStream = async event => {
   let transactions = await transactionsService.DE()
-  let result = await fhService.putToStreamBatch(process.env.deliveryStreamDE, transactions)
-
+  var result = await Promise.all(transactions.map(v => fhService.putToStream(process.env.deliveryStreamDE, v)))
   return {
     statusCode: 200,
     body: JSON.stringify({
