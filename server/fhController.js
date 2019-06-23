@@ -1,5 +1,5 @@
-const transactionsService = require('./server/service/transactionsService')
-const fhService = require('./server/service/fhService')
+const transactionsService = require('./service/transactionsService')
+const fhService = require('./service/fhService')
 
 module.exports.putToStream = async event => {
   let transactions = await transactionsService.DE()
