@@ -1,5 +1,5 @@
-const transactionsService = require('./service/transactionsService')
-const fhService = require('./service/fhService')
+const transactionsService = require('./server/service/transactionsService')
+const fhService = require('./server/service/fhService')
 
 module.exports.DE = async event => {
     let transactions = await transactionsService.DE()

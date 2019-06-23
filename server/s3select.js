@@ -1,8 +1,8 @@
 'use strict';
 
-const transactionsService = require('./service/transactionsService')
-const s3Service = require('./service/s3Service')
-const converter = require('./service/converter')
+const transactionsService = require('./server/service/transactionsService')
+const s3Service = require('./server/service/s3Service')
+const converter = require('./server/service/converter')
 
 exports.create = async event => {
   var transactions = await transactionsService.DE()

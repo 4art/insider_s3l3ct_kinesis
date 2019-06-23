@@ -1,5 +1,8 @@
 service: insider
 
+plugins:
+  - serverless-offline
+  - serverless-s3-sync
 provider:
   name: aws
   runtime: nodejs8.10
@@ -24,29 +27,38 @@ custom:
   select_bucket: insider-transactions-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
+  guiBucketName: gui-${self:custom.serviceId}
+  siteName: myinsiderposition.com
+  aliasHostedZoneId: Z3AQBSTGFYJSTF    # us-east-1
+  aliasDNSName: s3-website-us-east-1.amazonaws.com
+#  createRoute53Record: true
+  s3Sync:
+  - bucketName: ${self:custom.siteName}
+    localDir: insider-gui/build
 
 functions:
-  createS3: #use cron
-    handler: s3select.create
+  createS3:
+    handler: server/s3select.create
     events:
+    - schedule: cron(0 12 * * ? *)
     - http:
         path: create
         method: get
   putToStream:
-    handler: fhController.putToStream
+    handler: server/fhController.putToStream
     timeout: 300
     events:
     - http:
         path: put
         method: get
   firehoseEvents:
-    handler: firehoseEvents.handler
+    handler: server/firehoseEvents.handler
     events:
       - s3:
           bucket: ${self:custom.select_bucket}
           event: s3:ObjectCreated:*
   glueCustomResource:
-    handler: glueCustomResource.handler
+    handler: server/glueCustomResource.handler
 
 resources:
   Resources:
@@ -98,3 +110,42 @@ resources:
       Properties:
         ServiceToken:
           Fn::GetAtt: [GlueCustomResourceLambdaFunction, Arn]
+    InsiderStaticSite:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        BucketName: ${self:custom.siteName}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+    StaticSiteS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: InsiderStaticSite
+        PolicyDocument:
+          Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action:
+            - s3:GetObject
+            Resource:
+              Fn::Join: [
+                "", [
+                "arn:aws:s3:::",
+                {
+                  "Ref": "InsiderStaticSite"
+                },
+                "/*"
+              ]
+              ]
+    DnsRecord:
+      Type: "AWS::Route53::RecordSet"
+      Properties:
+        AliasTarget:
+          DNSName: ${self:custom.aliasDNSName}
+          HostedZoneId: ${self:custom.aliasHostedZoneId}
+        HostedZoneName: ${self:custom.siteName}.
+        Name:
+          Ref: InsiderStaticSite
+        Type: 'A'

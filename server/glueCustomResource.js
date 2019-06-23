@@ -1,5 +1,5 @@
 'use strict'
-const glueService = require('./service/glueService')
+const glueService = require('./server/service/glueService')
 const CfnLambda = require('cfn-lambda');
 
 //Clean up S3 bucket
