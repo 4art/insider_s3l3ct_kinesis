@@ -17,3 +17,10 @@ exports.create = async event => {
   };
 };
 
+exports.select = async event => {
+  return {
+    statusCode: 200,
+    body: JSON.stringify([], null, 4)
+  };
+};
+

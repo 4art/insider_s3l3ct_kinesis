@@ -5,6 +5,7 @@
   "dependencies": {},
   "devDependencies": {
     "serverless": "^1.45.1",
+    "serverless-domain-manager": "^3.2.2",
     "serverless-offline": "^5.4.3",
     "serverless-s3-sync": "^1.8.0"
   }
