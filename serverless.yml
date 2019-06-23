@@ -29,9 +29,9 @@ custom:
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
   siteName: myinsiderposition.com
-  aliasHostedZoneId: Z3AQBSTGFYJSTF    # us-east-1
-  aliasDNSName: s3-website-us-east-1.amazonaws.com
-#  createRoute53Record: true
+  aliasHostedZoneId: Z21DNDUVLTQW6Q
+  aliasDNSName: s3-website.eu-central-1.amazonaws.com
+  createRoute53Record: true
   s3Sync:
   - bucketName: ${self:custom.siteName}
     localDir: insider-gui/build
