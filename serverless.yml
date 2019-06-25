@@ -44,6 +44,7 @@ custom:
 functions:
   createS3:
     handler: server/s3select.create
+    cors: true
     events:
     - schedule: cron(0 12 * * ? *)
     - http:
@@ -53,18 +54,21 @@ functions:
     handler: server/s3select.tradesDE
     events:
     - http:
+        cors: true
         path: trades/de
         method: get
   selectS3Companies:
     handler: server/s3select.companiesDE
     events:
     - http:
+        cors: true
         path: companies/de
         method: get
   selectS3Insiders:
     handler: server/s3select.insidersDE
     events:
     - http:
+        cors: true
         path: insiders/de
         method: get
   putToStream:
