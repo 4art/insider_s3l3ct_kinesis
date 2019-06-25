@@ -3,7 +3,7 @@ service: insider
 plugins:
   - serverless-offline
   - serverless-s3-sync
-  - serverless-domain-manager
+#  - serverless-domain-manager
 provider:
   name: aws
   runtime: nodejs8.10
@@ -35,11 +35,11 @@ custom:
   s3Sync:
   - bucketName: ${self:custom.siteName}
     localDir: insider-gui/build
-  customDomain:
-    domainName: api.myinsiderposition.com
-    basePath: ''
-    stage: ${self:provider.stage}
-    createRoute53Record: true
+#  customDomain:
+#    domainName: api.myinsiderposition.com
+#    basePath: ''
+#    stage: ${self:provider.stage}
+#    createRoute53Record: true
 
 functions:
   createS3:
@@ -50,10 +50,22 @@ functions:
         path: create
         method: get
   selectS3Trades:
-    handler: server/s3select.select
+    handler: server/s3select.tradesDE
     events:
     - http:
         path: trades/de
+        method: get
+  selectS3Companies:
+    handler: server/s3select.companiesDE
+    events:
+    - http:
+        path: companies/de
+        method: get
+  selectS3Insiders:
+    handler: server/s3select.insidersDE
+    events:
+    - http:
+        path: insiders/de
         method: get
   putToStream:
     handler: server/fhController.putToStream
