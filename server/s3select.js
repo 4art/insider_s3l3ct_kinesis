@@ -19,7 +19,7 @@ exports.create = async event => {
 };
 
 exports.tradesDE = async event =>
-    helper.getLambdaResponse(await s3Service.select(process.env.select_bucket).getLastTrades(event.queryStringParameters ? event.queryStringParameters.limit : null));
+    helper.getLambdaResponse(await s3Service.select(process.env.select_bucket).getLastTrades(event.queryStringParameters ? event.queryStringParameters.limit : null, event.queryStringParameters ? event.queryStringParameters.isin : ""));
 
 exports.companiesDE = async event => helper.getLambdaResponse(await s3Service.select(process.env.select_bucket).getAllCompanies());
 

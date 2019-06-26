@@ -3,7 +3,7 @@ service: insider
 plugins:
   - serverless-offline
   - serverless-s3-sync
-#  - serverless-domain-manager
+  - serverless-domain-manager
 provider:
   name: aws
   runtime: nodejs8.10
@@ -35,18 +35,20 @@ custom:
   s3Sync:
   - bucketName: ${self:custom.siteName}
     localDir: insider-gui/build
-#  customDomain:
-#    domainName: api.myinsiderposition.com
-#    basePath: ''
-#    stage: ${self:provider.stage}
-#    createRoute53Record: true
+  customDomain:
+    domainName: api.myinsiderposition.com
+    basePath: ''
+    certificateName: '*.myinsiderposition.com'
+    stage: ${self:provider.stage}
+    endpointType: 'regional'
+    createRoute53Record: true
 
 functions:
   createS3:
     handler: server/s3select.create
     cors: true
     events:
-    - schedule: cron(0 12 * * ? *)
+    - schedule: rate(2 hours)
     - http:
         path: create
         method: get
@@ -166,13 +168,13 @@ resources:
                 "/*"
               ]
               ]
-    DnsRecord:
-      Type: "AWS::Route53::RecordSet"
-      Properties:
-        AliasTarget:
-          DNSName: ${self:custom.aliasDNSName}
-          HostedZoneId: ${self:custom.aliasHostedZoneId}
-        HostedZoneName: ${self:custom.siteName}.
-        Name:
-          Ref: InsiderStaticSite
-        Type: 'A'
+#    DnsRecord:
+#      Type: "AWS::Route53::RecordSet"
+#      Properties:
+#        AliasTarget:
+#          DNSName: ${self:custom.aliasDNSName}
+#          HostedZoneId: ${self:custom.aliasHostedZoneId}
+#        HostedZoneName: ${self:custom.siteName}.
+#        Name:
+#          Ref: InsiderStaticSite
+#        Type: 'A'
