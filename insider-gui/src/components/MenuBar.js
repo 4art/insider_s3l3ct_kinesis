@@ -45,7 +45,7 @@ class MenuBar extends Component {
     console.log(this.props);
     return (
       <div className={classes.root}>
-        <AppBar position="static">
+        <AppBar style={{ backgroundColor: 'black' }} position="static" >
           <Toolbar>
             <IconButton onClick={this.handleClick} className={classes.menuButton} color="inherit" aria-label="Menu">
               <MenuIcon />
