@@ -1,6 +1,6 @@
 'use strict';
 
-const transactionsService = require('./service/transactionsService');
+const transactionsService = require('./service/tradesService');
 const s3Service = require('./service/s3Service');
 const converter = require('./service/converter');
 const helper = require('./service/helper');
