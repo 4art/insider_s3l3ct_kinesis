@@ -1,34 +1,31 @@
 import React, {Component} from '../../node_modules/react';
 import {withStyles} from '../../node_modules/@material-ui/core';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper'
 import makeAnimated from 'react-select/animated';
 import Select from 'react-select';
 import DeleteIcon from '@material-ui/icons/Delete';
-import RingLoader from 'react-spinners/RingLoader';
 import {getCompaniesDE, getTradesDE} from "../apiService";
+import MUIDataTable from "mui-datatables";
+import RingLoader from 'react-spinners/RingLoader';
 
 const styles = theme => ({
     root: {
         margin: 'auto',
         width: '80%',
-        paddingLeft: theme.spacing(10),
-        paddingTop: theme.spacing(5),
+        height: '100%',
+        paddingTop: theme.spacing(2),
         align: 'center',
         overflowX: 'auto',
     },
     paper: {
         margin: 'auto',
-        width: '100%',
+        width: '90%',
         overflowX: 'auto',
         marginBottom: theme.spacing(2),
     },
     table: {
         margin: 'auto',
+        maxWidth: 10
     },
     typography: {
         margin: "10px",
@@ -61,8 +58,12 @@ class Trades extends Component {
                 value: null,
                 label: null
             },
-            tradesLimit: 7,
-            tradesLoading: false
+            tradesLimit: 1000,
+            tradesLoading: false,
+            tradesTableData: {
+                columns: [],
+                data: []
+            }
         }
     }
 
@@ -83,7 +84,12 @@ class Trades extends Component {
         this.setState({...this.state, tradesLoading: true})
         let tradesDePromise = getTradesDE(this.state.tradesLimit, this.state.currentCompany.value);
         const trades = await tradesDePromise;
-        this.setState({...this.state, trades: trades, tradesLoading: false})
+        this.setState({
+            ...this.state,
+            trades: trades,
+            tradesLoading: false,
+            tradesTableData: this.getTradesTableData(trades)
+        })
     }
 
     currentCompanyOnChange(v) {
@@ -105,49 +111,36 @@ class Trades extends Component {
 
     getTradesTable() {
         const {classes} = this.props;
-        const table = <Table size="small" padding="checkbox" className={classes.table}>
-            <TableHead>
-                <TableRow>
-                    {!this.isCompanyChosed() ? <TableCell>ISIN</TableCell> : null}
-                    {!this.isCompanyChosed() ? <TableCell align="right">Company</TableCell> : null}
-                    {!this.isCompanyChosed() ? <TableCell align="right">Issuer</TableCell> :
-                        <TableCell>Issuer</TableCell>}
-                    <TableCell align="right">Position</TableCell>
-                    <TableCell align="right">Instrument</TableCell>
-                    <TableCell align="right">Typ</TableCell>
-                    <TableCell align="right">Volume</TableCell>
-                    <TableCell align="right">Price</TableCell>
-                    <TableCell align="right">Date</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {this.state.trades.map((row, i) => (
-                    <TableRow key={`trades_${i}`}>
-                        {!this.isCompanyChosed() ? <TableCell>{row.ISIN}</TableCell> : null}
-                        {!this.isCompanyChosed() ? <TableCell align="right">{row.Issuer}</TableCell> : null}
-                        <TableCell
-                            align={!this.isCompanyChosed() ? "right" : "left"}>{row["Parties_subject_to_the_notification_requirement"]}</TableCell>
-                        <TableCell align="right">{row["Position_/_status"]}</TableCell>
-                        <TableCell align="right">{row["Typ_of_instrument"]}</TableCell>
-                        <TableCell align="right">{row["Nature_of_transaction"]}</TableCell>
-                        <TableCell align="right">{row["Aggregated_volume"]}</TableCell>
-                        <TableCell align="right">{row["Averrage_price"]}</TableCell>
-                        <TableCell align="right">{row["Date_of_transaction"]}</TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+        const options = {
+            filterType: "dropdown",
+            responsive: 'stacked'
+        };
+
+        let table = <MUIDataTable
+            title="Last trades"
+            data={this.state.tradesTableData.data}
+            columns={this.state.tradesTableData.columns}
+            options={options}
+        />;
         return <div className={classes.root}>
             <RingLoader
                 sizeUnit={"px"}
                 size={130}
                 color={'black'}
                 loading={this.state.tradesLoading}
-                css={{margin: 'auto'}}
-            />
-            {!this.state.tradesLoading ? table : <><br/><br/><br/><br/></>}
-
+                css={{margin: 'auto'}}/>
+        {!this.state.tradesLoading ? table : <><br/><br/><br/><br/></>}
         </div>
+    }
+
+    getTradesTableData(trades) {
+        return {
+            columns: !this.isCompanyChosed() ? ['ISIN', 'Company', 'Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'] : ['Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'],
+            data: trades.map(v => !this.isCompanyChosed() ?
+                [v.ISIN, v.Issuer, v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], v["Aggregated_volume"], v["Averrage_price"], v["Date_of_transaction"]]
+                : [v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], v["Aggregated_volume"], v["Averrage_price"], v["Date_of_transaction"]]
+            )
+        }
     }
 
     render() {
