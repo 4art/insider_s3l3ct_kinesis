@@ -22,16 +22,16 @@ function TradesSelect(bucket) {
         if(!limit || typeof limit === "undefined"){
             limit = 20
         }
-        return select(bucket, 'transactions.json', isin === ""
+        return select(bucket, 'trades.json', isin === ""
         ? `SELECT *
            FROM s3object s LIMIT ${parseInt(limit)}`
         : `SELECT * 
           FROM s3object s WHERE s.ISIN = '${isin}' LIMIT ${parseInt(limit)}`)
     };
 
-    this.getAllCompanies = () => select(bucket, 'transactions.json', 'SELECT s.Issuer, s.ISIN FROM s3object s').then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'ISIN')))
+    this.getAllCompanies = () => select(bucket, 'trades.json', 'SELECT s.Issuer, s.ISIN FROM s3object s').then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'ISIN')))
 
-    this.getInsiders = isin => select(bucket, "transactions.json", `SELECT s.Issuer, s."BaFin-ID", s.ISIN, s."Parties_subject_to_the_notification_requirement", s."Position_/_status" FROM s3object s WHERE s.ISIN = '${isin}'`).then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'Parties_subject_to_the_notification_requirement')))
+    this.getInsiders = isin => select(bucket, "trades.json", `SELECT s.Issuer, s."BaFin-ID", s.ISIN, s."Parties_subject_to_the_notification_requirement", s."Position_/_status" FROM s3object s WHERE s.ISIN = '${isin}'`).then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'Parties_subject_to_the_notification_requirement')))
 }
 
 const select = (bucket, key, query) => {

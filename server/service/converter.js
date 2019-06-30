@@ -36,19 +36,19 @@ exports.bafinMoneyToObject = moneyString => {
         value: parseFloat(preparedString),
         currency: preparedString.substr(preparedString.length - 3)
     }
-}
+};
 
 exports.bafinStringDate = stringDate => {
     if(stringDate.match(/(0[1-9]|[1-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4} (2[0-3]|[01][0-9]):[0-5][0-9]:[0-5][0-9]/)){
-        const [day, month, yearTime] = stringDate.split("/")
+        const [day, month, yearTime] = stringDate.split("/");
         let split = yearTime.split(" ");
-        const year = split[0]
-        const [hours, minutes, seconds] = split[1].split(":")
+        const year = split[0];
+        const [hours, minutes, seconds] = split[1].split(":");
         return new Date(year, month - 1, day, hours, minutes, seconds)
     }
     if(stringDate.match(/(0[1-9]|[1-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}/)) {
-        const [day, month, year] = stringDate.split("/")
+        const [day, month, year] = stringDate.split("/");
         return new Date(year, month - 1, day)
     }
     return new Error("Can't parse string date")
-}
+};

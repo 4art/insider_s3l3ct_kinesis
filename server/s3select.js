@@ -1,17 +1,17 @@
 'use strict';
 
-const transactionsService = require('./service/tradesService');
+const tradesService = require('./service/tradesService');
 const s3Service = require('./service/s3Service');
 const converter = require('./service/converter');
 const helper = require('./service/helper');
 
 exports.create = async event => {
-    var transactions = await transactionsService.DE();
-    var e = await s3Service.upload(converter.convertArrToS3Json(transactions), 'transactions.json', process.env.select_bucket);
+    var trades = await tradesService.DE();
+    var e = await s3Service.upload(converter.convertArrToS3Json(trades), 'trades.json', process.env.select_bucket);
     return {
         statusCode: 200,
         body: JSON.stringify({
-            transactions: transactions,
+            transactions: trades,
             bucket: process.env.select_bucket,
             upload: e
         })
