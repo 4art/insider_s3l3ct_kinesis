@@ -4,7 +4,7 @@
   "description": "",
   "main": "create.js",
   "scripts": {
-    "test": "mocha lambdaTest.js"
+    "test": "mocha app_test.js"
   },
   "author": "metraf",
   "license": "ISC",
