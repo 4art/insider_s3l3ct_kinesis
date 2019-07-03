@@ -87,7 +87,7 @@ const select = (bucket, key, query) => {
             });
 
             eventStream.on('end', () => {
-                console.log("finished event stream")
+                console.log("finished event stream");
                 let result = `[${arr.join('').replace(/\}\s+\{/g, '}, {')}]`;
                 res(result)
             });

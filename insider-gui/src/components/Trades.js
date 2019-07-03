@@ -7,6 +7,13 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import {getCompaniesDE, getTradesDE} from "../apiService";
 import MUIDataTable from "mui-datatables";
 import RingLoader from 'react-spinners/RingLoader';
+import {
+    bafinMoneyToObject,
+    bafinStringDate,
+    convertDateToString,
+    convertFloatToPrice,
+    tableKeyToSqlKey
+} from "./converter";
 
 const styles = theme => ({
     root: {
@@ -113,7 +120,30 @@ class Trades extends Component {
         const {classes} = this.props;
         const options = {
             filterType: "dropdown",
-            responsive: 'stacked'
+            responsive: 'stacked',
+            customSort: (data, colIndex, order) => {
+                const columnsFormats = {
+                    "Aggregated_volume": "float",
+                    "Averrage_price": "float",
+                    "Date_of_transaction": "date",
+
+                };
+                if (typeof this.state.tradesTableData.columns[colIndex] !== "undefined") {
+                    if (columnsFormats[tableKeyToSqlKey(this.state.tradesTableData.columns[colIndex])] === "float") {
+                        return data.sort((a, b) => {
+                            return (bafinMoneyToObject(a.data[colIndex]).value < bafinMoneyToObject(b.data[colIndex]).value ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                        })
+                    }
+                    if (columnsFormats[tableKeyToSqlKey(this.state.tradesTableData.columns[colIndex])] === "date") {
+                        return data.sort((a, b) => {
+                            return (bafinStringDate(a.data[colIndex]).getTime() < bafinStringDate(b.data[colIndex]).getTime() ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                        })
+                    }
+                }
+                return data.sort((a, b) => {
+                    return (a.data[colIndex].toLowerCase() < b.data[colIndex].toLowerCase() ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                });
+            }
         };
 
         let table = <MUIDataTable
@@ -129,7 +159,7 @@ class Trades extends Component {
                 color={'black'}
                 loading={this.state.tradesLoading}
                 css={{margin: 'auto'}}/>
-        {!this.state.tradesLoading ? table : <><br/><br/><br/><br/></>}
+            {!this.state.tradesLoading ? table : <><br/><br/><br/><br/></>}
         </div>
     }
 
@@ -137,8 +167,8 @@ class Trades extends Component {
         return {
             columns: !this.isCompanyChosed() ? ['ISIN', 'Company', 'Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'] : ['Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'],
             data: trades.map(v => !this.isCompanyChosed() ?
-                [v.ISIN, v.Issuer, v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], v["Aggregated_volume"], v["Averrage_price"], v["Date_of_transaction"]]
-                : [v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], v["Aggregated_volume"], v["Averrage_price"], v["Date_of_transaction"]]
+                [v.ISIN, v.Issuer, v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], convertFloatToPrice(v["Aggregated_volume"], v.currency), convertFloatToPrice(v["Averrage_price"], v.currency), convertDateToString(v["Date_of_transaction"])]
+                : [v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], convertFloatToPrice(v["Aggregated_volume"], v.currency), convertFloatToPrice(v["Averrage_price"], v.currency), convertDateToString(v["Date_of_transaction"])]
             )
         }
     }
