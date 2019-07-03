@@ -25,7 +25,7 @@ provider:
 
 custom:
   serviceId: ${self:service}-${self:provider.stage}
-  select_bucket: insider-transactions-${self:provider.stage}
+  select_bucket: insider-trades-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
@@ -47,6 +47,7 @@ functions:
   createS3:
     handler: server/s3select.create
     cors: true
+    timeout: 300
     events:
     - schedule: rate(2 hours)
     - http:
@@ -100,7 +101,7 @@ resources:
             Fn::Join:
             - ''
             - - 'arn:aws:s3:::'
-              - Ref: S3BucketInsidertransactions${self:provider.stage}
+              - Ref: S3BucketInsidertrades${self:provider.stage}
           BufferingHints:
             IntervalInSeconds: "60"
             SizeInMBs: "1"

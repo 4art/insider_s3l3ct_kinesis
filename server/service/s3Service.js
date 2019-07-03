@@ -3,7 +3,7 @@
 const
     AWS = require('aws-sdk'),
     S3 = new AWS.S3();
-const helper = require('./converter')
+const helper = require('./converter');
 
 exports.upload = (body, key, bucket) => {
     console.log(`FUNCTION STARTED: ${new Date()}`);
@@ -29,7 +29,7 @@ function TradesSelect(bucket) {
           FROM s3object s WHERE s.ISIN = '${isin}' LIMIT ${parseInt(limit)}`)
     };
 
-    this.getAllCompanies = () => select(bucket, 'trades.json', 'SELECT s.Issuer, s.ISIN FROM s3object s').then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'ISIN')))
+    this.getAllCompanies = () => select(bucket, 'trades.json', 'SELECT s.Issuer, s.ISIN FROM s3object s').then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'ISIN')));
 
     this.getInsiders = isin => select(bucket, "trades.json", `SELECT s.Issuer, s."BaFin-ID", s.ISIN, s."Parties_subject_to_the_notification_requirement", s."Position_/_status" FROM s3object s WHERE s.ISIN = '${isin}'`).then(data => JSON.stringify(helper.removeDuplicates(JSON.parse(data), 'Parties_subject_to_the_notification_requirement')))
 }
@@ -55,26 +55,28 @@ const select = (bucket, key, query) => {
     return new Promise((res, rej) => {
 
         S3.selectObjectContent(params, function (err, data) {
+            if(data == null){
+                res('[]');
+                return
+            }
             const eventStream = data.Payload;
 
             if (err) {
                 console.error(err, err.stack);
                 rej(err)
             }
-            let arr = []
+            let arr = [];
 
             // Read events as they are available
             eventStream.on('data', (event) => {
                 if (event.Records) {
-                    arr.push(event.Records.Payload.toString().replace(/\}\s+\{/g, '}, {'))
+                    arr.push(event.Records.Payload.toString())
 
                 } else if (event.Stats) {
                     console.log(`Processed ${event.Stats.Details.BytesProcessed} bytes`);
                 } else if (event.End) {
                     console.log('SelectObjectContent completed');
-                    let result = `[${arr.join('')}]`;
-                    // console.log(`result: ${result}`);
-                    res(result)
+
                 }
             });
 
@@ -86,6 +88,8 @@ const select = (bucket, key, query) => {
 
             eventStream.on('end', () => {
                 console.log("finished event stream")
+                let result = `[${arr.join('').replace(/\}\s+\{/g, '}, {')}]`;
+                res(result)
             });
 
         });
