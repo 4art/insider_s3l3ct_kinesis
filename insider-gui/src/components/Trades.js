@@ -65,7 +65,7 @@ class Trades extends Component {
                 value: null,
                 label: null
             },
-            tradesLimit: 1000,
+            tradesLimit: 5000,
             tradesLoading: false,
             tradesTableData: {
                 columns: [],

@@ -1,21 +1,36 @@
 import bigDecimal from 'js-big-decimal'
 import moment from 'moment'
 
-const convertFloatToPrice = (float, currency) => `${bigDecimal.getPrettyValue(float)} ${currency}`;
+const convertFloatToPrice = (float, currency) => typeof float === "number" ? `${bigDecimal.getPrettyValue(float)} ${currency}` : float;
 
-const convertDateToString = date => moment(date).format('DD/MM/YYYY');
+const convertDateToString = date => {
+    let dateStr = moment(date).format('DD/MM/YYYY');
+    if (dateStr !== "Invalid date") {
+        return dateStr
+    }
+    console.log("date: ", date)
+};
 
 const tableKeyToSqlKey = key => {
     switch (key) {
-        case 'Company': return 'Issuer';
-        case 'Issuer': return 'Parties_subject_to_the_notification_requirement';
-        case 'Position': return 'Position_/_status';
-        case 'Instrument': return 'Typ_of_instrument';
-        case 'Typ': return 'Nature_of_transaction';
-        case 'Volume': return 'Aggregated_volume';
-        case 'Price': return 'Averrage_price';
-        case 'Date': return 'Date_of_transaction';
-        default: return key
+        case 'Company':
+            return 'Issuer';
+        case 'Issuer':
+            return 'Parties_subject_to_the_notification_requirement';
+        case 'Position':
+            return 'Position_/_status';
+        case 'Instrument':
+            return 'Typ_of_instrument';
+        case 'Typ':
+            return 'Nature_of_transaction';
+        case 'Volume':
+            return 'Aggregated_volume';
+        case 'Price':
+            return 'Averrage_price';
+        case 'Date':
+            return 'Date_of_transaction';
+        default:
+            return key
     }
 };
 
