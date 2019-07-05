@@ -2,6 +2,7 @@
 
 const tradesService = require('./service/tradesService');
 const s3Service = require('./service/s3Service');
+const financeService = require('./service/financeService');
 const converter = require('./service/converter');
 const helper = require('./service/helper');
 
@@ -24,3 +25,5 @@ exports.tradesDE = async event =>
 exports.companiesDE = async event => helper.getLambdaResponse(await s3Service.select(process.env.select_bucket).getAllCompanies());
 
 exports.insidersDE = async event => helper.getLambdaResponse(await s3Service.select(process.env.select_bucket).getInsiders(event.queryStringParameters ? event.queryStringParameters.isin : null));
+
+exports.companyHistoricalChartData = async event => helper.getLambdaResponse(await financeService.getCompanyHistoricalChartData(event.queryStringParameters ? event.queryStringParameters.isin : null));

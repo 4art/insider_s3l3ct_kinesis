@@ -15,6 +15,8 @@ import {
     tableKeyToSqlKey
 } from "./converter";
 
+import LineCharts from './HistoricalStockChart';
+
 const styles = theme => ({
     root: {
         margin: 'auto',
@@ -173,30 +175,42 @@ class Trades extends Component {
         }
     }
 
+    getSelectCompaniesDiv(classes) {
+        return <div className={classes.selectSearchDiv}>
+            <Select
+                className={classes.selectSearch}
+                closeMenuOnSelect={true}
+                value={this.state.currentCompany}
+                components={makeAnimated}
+                onChange={this.currentCompanyOnChange.bind(this)}
+                options={this.state.companies.map(v => ({value: v.ISIN, label: `${v.Issuer} - ${v.ISIN}`}))}
+                theme={(theme) => ({
+                    ...theme,
+                    borderRadius: 0,
+                    colors: {
+                        ...theme.colors,
+                        primary25: 'gray',
+                        primary: 'black',
+                    },
+                })
+                }
+            />
+            <DeleteIcon onClick={this.removeCurrentCompany.bind(this)}/>
+        </div>;
+    }
+
+    getLineCharts() {
+        if(!this.isCompanyChosed()){
+            return null
+        }
+        return <LineCharts company={this.state.currentCompany}/>;
+    }
+
     render() {
         const {classes} = this.props;
         return <Paper className={classes.paper}>
-            <div className={classes.selectSearchDiv}>
-                <Select
-                    className={classes.selectSearch}
-                    closeMenuOnSelect={true}
-                    value={this.state.currentCompany}
-                    components={makeAnimated}
-                    onChange={this.currentCompanyOnChange.bind(this)}
-                    options={this.state.companies.map(v => ({value: v.ISIN, label: v.Issuer}))}
-                    theme={(theme) => ({
-                        ...theme,
-                        borderRadius: 0,
-                        colors: {
-                            ...theme.colors,
-                            primary25: 'gray',
-                            primary: 'black',
-                        },
-                    })
-                    }
-                />
-                <DeleteIcon onClick={this.removeCurrentCompany.bind(this)}/>
-            </div>
+            {this.getSelectCompaniesDiv(classes)}
+            {this.getLineCharts()}
             {this.getTradesTable()}
         </Paper>
     }

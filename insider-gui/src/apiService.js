@@ -9,8 +9,11 @@ const getCompaniesDE = async () => getAxiosData(`${apiUrl}/companies/de`);
 
 const getInsidersDE = async isin => getAxiosData(`${apiUrl}/insiders/de?${queryString.stringify({isin: isin})}`);
 
+const getCompanyHistoricalChartPrices = isin => getAxiosData(`${apiUrl}/chart/historical`);
+
 const getAxiosData = async url => axios.get(url).then(v => v.data);
 
 export {getTradesDE}
 export {getCompaniesDE}
 export {getInsidersDE}
+export {getCompanyHistoricalChartPrices}
