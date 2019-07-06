@@ -50,7 +50,8 @@ const styles = theme => ({
         textAlign: 'center',
         margin: 'auto',
         display: 'inline-block',
-        paddingRight: 10
+        paddingRight: 10,
+        zIndex: 999
     },
     removeIcon: {
         cursor: 'pointer'
@@ -167,9 +168,9 @@ class Trades extends Component {
 
     getTradesTableData(trades) {
         return {
-            columns: !this.isCompanyChosed() ? ['ISIN', 'Company', 'Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'] : ['Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'],
+            columns: !this.isCompanyChosed() ? ['Company', 'Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'] : ['Issuer', 'Position', 'Instrument', 'Typ', 'Volume', 'Price', 'Date'],
             data: trades.map(v => !this.isCompanyChosed() ?
-                [v.ISIN, v.Issuer, v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], convertFloatToPrice(v["Aggregated_volume"], v.currency), convertFloatToPrice(v["Averrage_price"], v.currency), convertDateToString(v["Date_of_transaction"])]
+                [v.Issuer, v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], convertFloatToPrice(v["Aggregated_volume"], v.currency), convertFloatToPrice(v["Averrage_price"], v.currency), convertDateToString(v["Date_of_transaction"])]
                 : [v["Parties_subject_to_the_notification_requirement"], v["Position_/_status"], v["Typ_of_instrument"], v["Nature_of_transaction"], convertFloatToPrice(v["Aggregated_volume"], v.currency), convertFloatToPrice(v["Averrage_price"], v.currency), convertDateToString(v["Date_of_transaction"])]
             )
         }
