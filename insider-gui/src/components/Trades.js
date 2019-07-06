@@ -15,7 +15,7 @@ import {
     tableKeyToSqlKey
 } from "./converter";
 
-import LineCharts from './HistoricalStockChart';
+import HistoricalStockChart from './HistoricalStockChart';
 
 const styles = theme => ({
     root: {
@@ -204,7 +204,7 @@ class Trades extends Component {
         if(!this.isCompanyChosed()){
             return null
         }
-        return <LineCharts company={this.state.currentCompany}/>;
+        return <HistoricalStockChart trades={this.state.trades} company={this.state.currentCompany}/>;
     }
 
     render() {

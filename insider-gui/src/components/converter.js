@@ -58,9 +58,33 @@ const bafinStringDate = stringDate => {
     return new Error("Can't parse string date")
 };
 
+function convertTradesToBubbe(trades) {
+    return trades.map(v => [new Date(v["Date_of_transaction"]).getTime(), v['Averrage_price'], 10]);
+}
+
+const getTradesChartData = (trades, isin) => ({
+    buy: convertTradesToBubbe(trades.filter(v => v["Nature_of_transaction"].includes("Buy") && v.ISIN === isin)),
+    sell: convertTradesToBubbe(trades.filter(v => v["Nature_of_transaction"].includes("Sell") && v.ISIN === isin)),
+    other: convertTradesToBubbe(trades.filter(v => v["Nature_of_transaction"].includes("Other") && v.ISIN === isin))
+});
+
+const findClosestTradeDate = (trades, date) => {
+    let tradesIndex = trades.findIndex(v => new Date(v["Date_of_transaction"]).getTime() <= date);
+    if(tradesIndex < 0){
+        return null
+    }
+    return trades[tradesIndex]["Date_of_transaction"]
+};
+
+const convertCurrentTradesToTooltip = (trades, type, color) => `<span style="color: ${color}">\u26CF</span> ${type}<br/> 
+${trades.map(v => `Name: ${v["Parties_subject_to_the_notification_requirement"]}, Volume: ${convertFloatToPrice(v["Aggregated_volume"], v.currency)}<br/>`)}`
+
 export {convertFloatToPrice}
 export {convertDateToString}
 export {tableKeyToSqlKey}
 export {bafinMoneyToObject}
 export {bafinStringDate}
+export {getTradesChartData}
+export {findClosestTradeDate}
+export {convertCurrentTradesToTooltip}
 
