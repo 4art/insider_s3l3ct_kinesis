@@ -13,7 +13,7 @@ import {
 } from 'react-jsx-highstock'
 import Highcharts from 'highcharts/highstock';
 import {getCompanyHistoricalChartPrices} from "../apiService";
-import {convertCurrentTradesToTooltip, findClosestTradeDate, getTradesChartData} from "./converter";
+import {convertCurrentTradesToTooltip, convertFloatToPrice, getTradesChartData} from "./converter";
 import addHighchartsMore from "highcharts/highcharts-more"
 
 const plotOptions = {
@@ -67,25 +67,21 @@ class HistoricalStockChart extends Component {
         const formatToolTip = function () {
             let trades = JSON.parse(JSON.stringify(self.props.trades));
             if (this.series.name === "buy") {
-                let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Buy") && v.ISIN === self.props.company.value);
-                let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
-                let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
-                return convertCurrentTradesToTooltip(currentTrades, "Buy", this.color)
+                return convertCurrentTradesToTooltip(trades, "Buy", this.color, self.props.company.value, this.x)
             }
             else if (this.series.name === "sell") {
-                let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Sell") && v.ISIN === self.props.company.value);
-                let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
-                let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
-                return convertCurrentTradesToTooltip(currentTrades, "Sell", this.color)
+                return convertCurrentTradesToTooltip(trades, "Sell", this.color, self.props.company.value, this.x)
             }
             else if (this.series.name === "other") {
-                let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Other") && v.ISIN === self.props.company.value);
-                let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
-                let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
-                return convertCurrentTradesToTooltip(currentTrades, "Other", this.color)
+                return convertCurrentTradesToTooltip(trades, "Other", this.color, self.props.company.value, this.x)
             }
-
-
+            return `<span style="color: ${this.color}">\u2022</span> Price: ${convertFloatToPrice(this.y, self.props.trades.find(v => v.currency != null && v.currency !== "").currency)} <br/> 
+Date: ${new Date(this.x).toLocaleDateString("en-US", {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}<br/>`
         };
 
         return (

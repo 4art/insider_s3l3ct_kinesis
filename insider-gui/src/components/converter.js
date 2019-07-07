@@ -70,14 +70,19 @@ const getTradesChartData = (trades, isin) => ({
 
 const findClosestTradeDate = (trades, date) => {
     let tradesIndex = trades.findIndex(v => new Date(v["Date_of_transaction"]).getTime() <= date);
-    if(tradesIndex < 0){
+    if (tradesIndex < 0) {
         return null
     }
     return trades[tradesIndex]["Date_of_transaction"]
 };
 
-const convertCurrentTradesToTooltip = (trades, type, color) => `<span style="color: ${color}">\u26CF</span> ${type}<br/> 
-${trades.map(v => `Name: ${v["Parties_subject_to_the_notification_requirement"]}, Volume: ${convertFloatToPrice(v["Aggregated_volume"], v.currency)}<br/>`)}`
+const convertCurrentTradesToTooltip = (trades, type, color, isin, date) => {
+    let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes(type) && v.ISIN === isin);
+    let closestTradeDate = findClosestTradeDate(companyTrades, date);
+    let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
+    let namesAsString = currentTrades.map(v => `<br/> Name: ${v["Parties_subject_to_the_notification_requirement"]}, Volume: ${convertFloatToPrice(v["Aggregated_volume"], v.currency)}`);
+    return `<span style="color: ${color}">\u2022</span> ${type}${namesAsString}`
+}
 
 export {convertFloatToPrice}
 export {convertDateToString}
