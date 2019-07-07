@@ -62,6 +62,10 @@ class HistoricalStockChart extends Component {
         }, () => console.log(this.state, this.props.trades))
     }
 
+    getCurrency() {
+        return this.props.trades.find(v => v.currency != null && v.currency !== "").currency;
+    }
+
     render() {
         const self = this;
         const formatToolTip = function () {
@@ -75,7 +79,7 @@ class HistoricalStockChart extends Component {
             else if (this.series.name === "other") {
                 return convertCurrentTradesToTooltip(trades, "Other", this.color, self.props.company.value, this.x)
             }
-            return `<span style="color: ${this.color}">\u2022</span> Price: ${convertFloatToPrice(this.y, self.props.trades.find(v => v.currency != null && v.currency !== "").currency)} <br/> 
+            return `<span style="color: ${this.color}">\u2022</span> Price: ${convertFloatToPrice(this.y, self.getCurrency())} <br/> 
 Date: ${new Date(this.x).toLocaleDateString("en-US", {
                 weekday: 'long',
                 year: 'numeric',
@@ -83,6 +87,10 @@ Date: ${new Date(this.x).toLocaleDateString("en-US", {
                 day: 'numeric'
             })}<br/>`
         };
+
+        const formatYAxis = function () {
+            return `${this.value} ${self.getCurrency()}`
+        }
 
         return (
             <div>
@@ -98,7 +106,7 @@ Date: ${new Date(this.x).toLocaleDateString("en-US", {
                         <XAxis id="myXaxis" type="datetime">
                         </XAxis>
 
-                        <YAxis>
+                        <YAxis labels={{formatter: formatYAxis}}>
                             <YAxis.Title>Price</YAxis.Title>
                             <AreaSeries color="#000000" name={this.props.company.label}
                                         data={this.state.chartData.prices}/>
