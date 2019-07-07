@@ -41,7 +41,13 @@ class HistoricalStockChart extends Component {
     }
 
     async componentDidMount() {
+        this.props.onRef(this)
+        console.log("highstock did mount");
         await this.loadChart();
+    }
+
+    componentWillUnmount() {
+        this.props.onRef(undefined)
     }
 
     async loadChart() {
@@ -57,22 +63,22 @@ class HistoricalStockChart extends Component {
     }
 
     render() {
-        const self = this
+        const self = this;
         const formatToolTip = function () {
             let trades = JSON.parse(JSON.stringify(self.props.trades));
-            if(this.series.name === "buy"){
+            if (this.series.name === "buy") {
                 let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Buy") && v.ISIN === self.props.company.value);
                 let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
                 let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
                 return convertCurrentTradesToTooltip(currentTrades, "Buy", this.color)
             }
-            else if(this.series.name === "sell"){
+            else if (this.series.name === "sell") {
                 let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Sell") && v.ISIN === self.props.company.value);
                 let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
                 let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
                 return convertCurrentTradesToTooltip(currentTrades, "Sell", this.color)
             }
-            else if(this.series.name === "other"){
+            else if (this.series.name === "other") {
                 let companyTrades = trades.filter(v => v["Nature_of_transaction"].includes("Other") && v.ISIN === self.props.company.value);
                 let closestTradeDate = findClosestTradeDate(companyTrades, this.x);
                 let currentTrades = companyTrades.filter(v => v["Date_of_transaction"] === closestTradeDate);
@@ -80,8 +86,7 @@ class HistoricalStockChart extends Component {
             }
 
 
-
-        }
+        };
 
         return (
             <div>
@@ -124,5 +129,5 @@ class HistoricalStockChart extends Component {
     }
 }
 
-addHighchartsMore(Highcharts)
+addHighchartsMore(Highcharts);
 export default withHighcharts(HistoricalStockChart, Highcharts);

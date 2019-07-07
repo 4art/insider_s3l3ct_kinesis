@@ -6,7 +6,7 @@ import Select from 'react-select';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {getCompaniesDE, getTradesDE} from "../apiService";
 import MUIDataTable from "mui-datatables";
-import RingLoader from 'react-spinners/RingLoader';
+import FadeLoader from 'react-spinners/FadeLoader';
 import {
     bafinMoneyToObject,
     bafinStringDate,
@@ -74,7 +74,7 @@ class Trades extends Component {
                 columns: [],
                 data: []
             }
-        }
+        };
     }
 
     async componentDidMount() {
@@ -95,11 +95,16 @@ class Trades extends Component {
         let tradesDePromise = getTradesDE(this.state.tradesLimit, this.state.currentCompany.value);
         const trades = await tradesDePromise;
         this.setState({
-            ...this.state,
-            trades: trades,
-            tradesLoading: false,
-            tradesTableData: this.getTradesTableData(trades)
-        })
+                ...this.state,
+                trades: trades,
+                tradesLoading: false,
+                tradesTableData: this.getTradesTableData(trades)
+            }, () => {
+                if (typeof this.childComponent !== "undefined") {
+                    this.childComponent.loadChart()
+                }
+            }
+        )
     }
 
     currentCompanyOnChange(v) {
@@ -134,17 +139,17 @@ class Trades extends Component {
                 if (typeof this.state.tradesTableData.columns[colIndex] !== "undefined") {
                     if (columnsFormats[tableKeyToSqlKey(this.state.tradesTableData.columns[colIndex])] === "float") {
                         return data.sort((a, b) => {
-                            return (bafinMoneyToObject(a.data[colIndex]).value < bafinMoneyToObject(b.data[colIndex]).value ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                            return (bafinMoneyToObject(a.data[colIndex]).value < bafinMoneyToObject(b.data[colIndex]).value ? -1 : 1) * (order === 'desc' ? 1 : -1);
                         })
                     }
                     if (columnsFormats[tableKeyToSqlKey(this.state.tradesTableData.columns[colIndex])] === "date") {
                         return data.sort((a, b) => {
-                            return (bafinStringDate(a.data[colIndex]).getTime() < bafinStringDate(b.data[colIndex]).getTime() ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                            return (bafinStringDate(a.data[colIndex]).getTime() < bafinStringDate(b.data[colIndex]).getTime() ? -1 : 1) * (order === 'desc' ? 1 : -1);
                         })
                     }
                 }
                 return data.sort((a, b) => {
-                    return (a.data[colIndex].toLowerCase() < b.data[colIndex].toLowerCase() ? -1: 1 ) * (order === 'desc' ? 1 : -1);
+                    return (a.data[colIndex].toLowerCase() < b.data[colIndex].toLowerCase() ? -1 : 1) * (order === 'desc' ? 1 : -1);
                 });
             }
         };
@@ -156,7 +161,7 @@ class Trades extends Component {
             options={options}
         />;
         return <div className={classes.root}>
-            <RingLoader
+            <FadeLoader
                 sizeUnit={"px"}
                 size={130}
                 color={'black'}
@@ -201,10 +206,13 @@ class Trades extends Component {
     }
 
     getLineCharts() {
-        if(!this.isCompanyChosed()){
+        if (!this.isCompanyChosed()) {
             return null
         }
-        return <HistoricalStockChart trades={this.state.trades} company={this.state.currentCompany}/>;
+        let historicalStockChart = <HistoricalStockChart onRef={ref => (this.childComponent = ref)} trades={this.state.trades}
+                                                         company={this.state.currentCompany}/>;
+        setTimeout(() => this.childComponent.loadChart(), 2000);
+        return historicalStockChart;
     }
 
     render() {
