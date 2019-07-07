@@ -3,7 +3,7 @@ service: insider
 plugins:
   - serverless-offline
   - serverless-s3-sync
-#  - serverless-domain-manager
+  - serverless-domain-manager
 provider:
   name: aws
   runtime: nodejs8.10
@@ -25,7 +25,7 @@ provider:
 
 custom:
   serviceId: ${self:service}-${self:provider.stage}
-  select_bucket: insider-transactions-${self:provider.stage}
+  select_bucket: insider-trades-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
@@ -34,58 +34,68 @@ custom:
   aliasDNSName: s3-website.eu-central-1.amazonaws.com
   s3Sync:
   - bucketName: ${self:custom.siteName}
-    localDir: insider-gui/build
-#  customDomain:
-#    domainName: api.myinsiderposition.com
-#    basePath: ''
-#    stage: ${self:provider.stage}
-#    createRoute53Record: true
+    localDir: ../insider-gui/build
+  customDomain:
+    domainName: api.myinsiderposition.com
+    basePath: ''
+    certificateName: '*.myinsiderposition.com'
+    stage: ${self:provider.stage}
+    endpointType: 'regional'
+    createRoute53Record: true
 
 functions:
   createS3:
-    handler: server/s3select.create
+    handler: s3select.create
     cors: true
+    timeout: 300
     events:
-    - schedule: cron(0 12 * * ? *)
+    - schedule: rate(2 hours)
     - http:
         path: create
         method: get
   selectS3Trades:
-    handler: server/s3select.tradesDE
+    handler: s3select.tradesDE
     events:
     - http:
         cors: true
         path: trades/de
         method: get
   selectS3Companies:
-    handler: server/s3select.companiesDE
+    handler: s3select.companiesDE
     events:
     - http:
         cors: true
         path: companies/de
         method: get
+  selectCompaniesChartHistoricPrices:
+    handler: s3select.companyHistoricalChartData
+    events:
+    - http:
+        cors: true
+        path: chart/historical
+        method: get
   selectS3Insiders:
-    handler: server/s3select.insidersDE
+    handler: s3select.insidersDE
     events:
     - http:
         cors: true
         path: insiders/de
         method: get
   putToStream:
-    handler: server/fhController.putToStream
+    handler: fhController.putToStream
     timeout: 300
     events:
     - http:
         path: put
         method: get
   firehoseEvents:
-    handler: server/firehoseEvents.handler
+    handler: firehoseEvents.handler
     events:
       - s3:
           bucket: ${self:custom.select_bucket}
           event: s3:ObjectCreated:*
   glueCustomResource:
-    handler: server/glueCustomResource.handler
+    handler: glueCustomResource.handler
 
 resources:
   Resources:
@@ -98,7 +108,7 @@ resources:
             Fn::Join:
             - ''
             - - 'arn:aws:s3:::'
-              - Ref: S3BucketInsidertransactions${self:provider.stage}
+              - Ref: S3BucketInsidertrades${self:provider.stage}
           BufferingHints:
             IntervalInSeconds: "60"
             SizeInMBs: "1"
@@ -166,13 +176,13 @@ resources:
                 "/*"
               ]
               ]
-    DnsRecord:
-      Type: "AWS::Route53::RecordSet"
-      Properties:
-        AliasTarget:
-          DNSName: ${self:custom.aliasDNSName}
-          HostedZoneId: ${self:custom.aliasHostedZoneId}
-        HostedZoneName: ${self:custom.siteName}.
-        Name:
-          Ref: InsiderStaticSite
-        Type: 'A'
+#    DnsRecord:
+#      Type: "AWS::Route53::RecordSet"
+#      Properties:
+#        AliasTarget:
+#          DNSName: ${self:custom.aliasDNSName}
+#          HostedZoneId: ${self:custom.aliasHostedZoneId}
+#        HostedZoneName: ${self:custom.siteName}.
+#        Name:
+#          Ref: InsiderStaticSite
+#        Type: 'A'

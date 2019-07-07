@@ -5,11 +5,20 @@
   "dependencies": {
     "@material-ui/core": "^4.1.1",
     "@material-ui/icons": "^4.2.0",
-    "axios": "^0.19.0",
+    "highcharts": "^7.1.2",
+    "js-big-decimal": "^1.2.2",
+    "moment": "^2.24.0",
+    "mui-datatables": "^2.5.1",
+    "query-string": "^6.8.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-jsx-highcharts": "^3.6.0",
+    "react-jsx-highstock": "^3.6.0",
     "react-router-dom": "^5.0.1",
-    "react-scripts": "3.0.1"
+    "react-scripts": "3.0.1",
+    "react-select": "^3.0.4",
+    "react-spinners": "^0.5.4",
+    "yahoo-stocks": "^2.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
