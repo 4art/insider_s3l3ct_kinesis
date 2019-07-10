@@ -18,7 +18,7 @@ class Contact extends Component {
                 style={{ minHeight: '100vh' }}>
 
                 <Grid item xs={3}>
-                    <h1 className={this.props.classes.root}>Some contact page</h1>
+                    <h2 className={this.props.classes.root}>Some contact page</h2>
                 </Grid>
 
             </Grid>
