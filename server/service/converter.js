@@ -28,7 +28,7 @@ exports.isScvValidUrl = URL => new Promise((res, rej) => {
     })
 });
 
-exports.getDiffFromTwoArr = (oldArr = [], newArr = []) => oldArr.length === newArr.length ? [] : newArr.filter(v => underscore.isUndefined(oldArr.find(o => underscore.isEqual(v, o))));
+exports.getDiffFromTwoTradesArr = (oldArr = [], newArr = []) => newArr.map(o => !oldArr.map(v => v['BaFin-ID']).includes(o['BaFin-ID']) ? o : null).filter(v => v != null);
 
 exports.bafinMoneyToObject = moneyString => {
     if(typeof moneyString !== "string") return moneyString

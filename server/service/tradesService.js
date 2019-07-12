@@ -22,7 +22,8 @@ exports.DE = async () => {
     console.log(`got ${trades.length} trades from S3`);
     let newTrades = await newTradesPromise;
     console.log(`got ${newTrades.length} new trades from BaFin`);
-    return newTrades.map(v => ({
+
+    return trades.concat(converter.getDiffFromTwoTradesArr(trades, newTrades)).map(v => ({
         ...v,
         "Date_of_activation": converter.bafinStringDate(v["Date_of_activation"]),
         "Date_of_notification": converter.bafinStringDate(v["Date_of_notification"]),
@@ -31,7 +32,6 @@ exports.DE = async () => {
         "Averrage_price": converter.bafinMoneyToObject(v["Averrage_price"]).value,
         "currency": converter.bafinMoneyToObject(v["Averrage_price"]).currency
     }))
-    // return trades.concat(converter.getDiffFromTwoArr(trades, newTrades))
 };
 
 exports.DE()
