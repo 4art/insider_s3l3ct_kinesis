@@ -1,13 +1,30 @@
-import requests
 import re
+import boto3
+import os
+import time
+import json
+import requests
 from bs4 import BeautifulSoup
 
-def get_all_optionable(event, context):
-    stocks = stock_screener().get_stocks("sh_opt_option")
-    print(stocks)
-    return stocks
+def save_all_optionable(event, context):
+    stocks = Stock_screener().get_stocks("sh_opt_option")
+    S3Service().put_optional_stocks(stocks)
+    return '''
+    {
+        "status": "Successfully uploaded optional stocks"
+    }
+    '''
 
-class stock_screener:
+def save_all(event, context):
+    stocks = Stock_screener().get_stocks()
+    S3Service().put_stocks(stocks)
+    return '''
+    {
+        "status": "Successfully uploaded stocks"
+    }
+    '''
+
+class Stock_screener:
     def __init__(self):
         self.l = []
         self.done = False
@@ -28,7 +45,7 @@ class stock_screener:
         keys = table_data[0]
         for i in r:
             table = table_data[i]
-            obj = {}
+            obj = {"time": time.time()}
             for key in range(len(table)):
                 obj[keys[key]] = table[key]
             if int(obj["No."]) < len(self.l):
@@ -133,6 +150,21 @@ class stock_screener:
         return self.l
             
 
+class S3Service:
+    def put_optional_stocks(self, j):
+        self.put_text_to_file(os.environ.get('select_bucket'), 'stocks_optional.json', self.convert_json_to_s3(j))
+    
+    def put_stocks(self, j):
+        self.put_text_to_file(os.environ.get('select_bucket'), 'stocks.json', self.convert_json_to_s3(j))
+    
+    def put_text_to_file(self, bucket, key, text):
+        s3 = boto3.resource('s3')
+        object = s3.Object(bucket, key)
+        object.put(Body=text)
+
+    def convert_json_to_s3(self, j):
+        s=json.dumps(j)
+        return re.sub(r"\}\,\s+\{", "}\n{", s[1:-1])
 
 if __name__ == "__main__":
-    get_all_optionable('', '')
+    save_all_optionable('', '')

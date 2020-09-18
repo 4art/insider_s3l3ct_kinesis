@@ -5,13 +5,13 @@
   "main": "create.js",
   "scripts": {
     "test": "mocha app_test.js",
-    "debug": "node --inspect stock_collect.js"
+    "deploy": "npm run build --prefix ../insider-gui/ && sls deploy -v"
   },
   "author": "metraf",
   "license": "ISC",
   "devDependencies": {
-    "serverless": "^1.46.0",
-    "serverless-domain-manager": "^2.6.13",
+    "serverless": "^1.60.5",
+    "serverless-domain-manager": "^3.3.1",
     "serverless-offline": "^5.4.3",
     "serverless-s3-sync": "^1.8.0"
   },
@@ -25,6 +25,7 @@
     "jssoup": "0.0.12",
     "lambda-tester": "^3.5.0",
     "request": "^2.88.0",
+    "serverless-python-requirements": "^5.1.0",
     "underscore": "^1.9.1"
   }
 }

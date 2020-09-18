@@ -4,9 +4,20 @@ plugins:
   - serverless-offline
   - serverless-s3-sync
   - serverless-domain-manager
+  - serverless-python-requirements
+
+package:
+  exclude:
+    - .vscode/**
+    - venv/**
+    - stock_screener/venv/**
+    - stock_screener/env/**
+    - bin/**
+    - lib/**
+
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: python3.8
   stage: ${opt:stage, 'dev'}
   region: eu-central-1
   deploymentBucket:
@@ -24,6 +35,8 @@ provider:
     insiderDBGlue: ${self:custom.insiderDBGlue}
 
 custom:
+  pythonRequirements:
+    dockerizePip: non-linux
   serviceId: ${self:service}-${self:provider.stage}
   select_bucket: insider-trades-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
@@ -45,6 +58,7 @@ custom:
 
 functions:
   createS3:
+    runtime: nodejs12.x
     handler: s3select.create
     cors: true
     timeout: 300
@@ -54,6 +68,7 @@ functions:
         path: create
         method: get
   selectS3Trades:
+    runtime: nodejs12.x
     handler: s3select.tradesDE
     events:
     - http:
@@ -61,6 +76,7 @@ functions:
         path: trades/de
         method: get
   selectS3Companies:
+    runtime: nodejs12.x
     handler: s3select.companiesDE
     events:
     - http:
@@ -68,6 +84,7 @@ functions:
         path: companies/de
         method: get
   selectCompaniesChartHistoricPrices:
+    runtime: nodejs12.x
     handler: s3select.companyHistoricalChartData
     events:
     - http:
@@ -75,6 +92,7 @@ functions:
         path: chart/historical
         method: get
   selectS3Insiders:
+    runtime: nodejs12.x
     handler: s3select.insidersDE
     events:
     - http:
@@ -82,6 +100,7 @@ functions:
         path: insiders/de
         method: get
   putToStream:
+    runtime: nodejs12.x
     handler: fhController.putToStream
     timeout: 300
     events:
@@ -89,13 +108,26 @@ functions:
         path: put
         method: get
   firehoseEvents:
+    runtime: nodejs12.x
     handler: firehoseEvents.handler
     events:
       - s3:
           bucket: ${self:custom.select_bucket}
           event: s3:ObjectCreated:*
   glueCustomResource:
+    runtime: nodejs12.x
     handler: glueCustomResource.handler
+  optional_stocks:
+    handler: stock_screener_py/stock_screener.save_all_optionable
+    timeout: 900
+    memorySize: 3008
+    events:
+      - schedule: rate(15 minutes)
+      #- schedule: cron(0/15 * * * MON-FRI *)
+  stocks:
+    handler: stock_screener_py/stock_screener.save_all
+    timeout: 900
+    memorySize: 3008
 
 resources:
   Resources:
