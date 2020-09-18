@@ -5,12 +5,10 @@ const URL = 'https://portal.mvp.bafin.de/database/DealingsInfo/sucheForm.do?meld
 const converter = require('./converter');
 const s3Service = require('./s3Service');
 
-process.env.select_bucket = "insider-trades-dev"
-
 exports.DE = async () => {
     let newTradesPromise = converter.convertKeysForS3Json(csv({ delimiter: ';' }).fromStream(request.get(URL)));
     let urlValidPromise = converter.isScvValidUrl(URL);
-    let tradesPromise = s3Service.select(process.env.select_bucket).getLastTrades(1000000000);
+    let tradesPromise = s3Service.tradesSelect(process.env.select_bucket).getLastTrades(1000000000);
     let isUrlValid = await urlValidPromise;
     let trades = await tradesPromise;
     console.log("URL is valid", isUrlValid);

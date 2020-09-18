@@ -38,7 +38,7 @@ custom:
   pythonRequirements:
     dockerizePip: non-linux
   serviceId: ${self:service}-${self:provider.stage}
-  select_bucket: insider-trades-${self:provider.stage}
+  select_bucket: myinsiderposition-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
@@ -140,7 +140,7 @@ resources:
             Fn::Join:
             - ''
             - - 'arn:aws:s3:::'
-              - Ref: S3BucketInsidertrades${self:provider.stage}
+              - Ref: S3BucketMyinsiderposition${self:provider.stage}
           BufferingHints:
             IntervalInSeconds: "60"
             SizeInMBs: "1"

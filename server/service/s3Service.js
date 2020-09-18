@@ -3,6 +3,7 @@
 const
     AWS = require('aws-sdk'),
     S3 = new AWS.S3();
+const { result } = require('underscore');
 const helper = require('./converter');
 
 exports.upload = (body, key, bucket) => {
@@ -14,7 +15,17 @@ exports.upload = (body, key, bucket) => {
     }).promise()
 };
 
-exports.select = (bucket) => new TradesSelect(bucket);
+exports.tradesSelect = (bucket) => new TradesSelect(bucket);
+exports.stocksSelect = (bucket) => new StocksSelect(bucket);
+
+function StocksSelect(bucket) {
+    this.getOptionalStocks = keys => {
+        select(bucket, "stocks_optional.json", generateQuery(keys))
+    }
+    this.getOptionalStocks = (keys=[]) => {
+        select(bucket, "stocks.json", generateQuery(keys))
+    }
+}
 
 function TradesSelect(bucket) {
 
@@ -95,3 +106,14 @@ const select = (bucket, key, query) => {
         });
     })
 };
+
+function generateQuery(keys=[], where="", limit="") {
+    let result = `SELECT ${keys.map(v => `s.${v}`).join(", ")} FROM s3object s`
+    if(where) {
+        result += ` WHERE ${where}`
+    }
+    if(limit) {
+        limit += ` LIMIT ${limit}`
+    }
+    return result
+}
