@@ -29,4 +29,4 @@ exports.insidersDE = async event => helper.getLambdaResponse(await s3Service.tra
 
 exports.companyHistoricalChartData = async event => helper.getLambdaResponse(await financeService.getCompanyHistoricalChartData(event.queryStringParameters ? event.queryStringParameters.isin : null));
 
-exports.optionalStocks = async event => helper.getLambdaResponse(await stocksService.optional(Array.isArray(event.queryStringParameters.keys) ? event.queryStringParameters.keys : null));
+exports.optionalStocks = async event => helper.getLambdaResponse(await stocksService.optional(event.queryStringParameters ? Array.isArray(event.queryStringParameters.keys) ? event.queryStringParameters.keys : null : null));
