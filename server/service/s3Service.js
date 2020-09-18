@@ -19,12 +19,8 @@ exports.tradesSelect = (bucket) => new TradesSelect(bucket);
 exports.stocksSelect = (bucket) => new StocksSelect(bucket);
 
 function StocksSelect(bucket) {
-    this.getOptionalStocks = keys => {
-        select(bucket, "stocks_optional.json", generateQuery(keys))
-    }
-    this.getOptionalStocks = (keys=[]) => {
-        select(bucket, "stocks.json", generateQuery(keys))
-    }
+    this.getOptionalStocks = keys => select(bucket, "stocks_optional.json", generateQuery(keys))
+    this.getStocks = (keys=[]) => select(bucket, "stocks.json", generateQuery(keys))
 }
 
 function TradesSelect(bucket) {
@@ -108,6 +104,7 @@ const select = (bucket, key, query) => {
 };
 
 function generateQuery(keys=[], where="", limit="") {
+    console.log(`Generating query from keys: ${keys}, where: ${where}, limit:${limit}}`)
     let result = `SELECT ${keys.map(v => `s.${v}`).join(", ")} FROM s3object s`
     if(where) {
         result += ` WHERE ${where}`
@@ -115,5 +112,6 @@ function generateQuery(keys=[], where="", limit="") {
     if(limit) {
         limit += ` LIMIT ${limit}`
     }
+    console.log(`generated query: ${result}`)
     return result
 }
