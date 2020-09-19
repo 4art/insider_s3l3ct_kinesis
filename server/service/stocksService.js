@@ -5,3 +5,4 @@ const defaultKeys = ["Ticker", "Company", "Sector", "Industry", "Country", "Pric
 
 exports.optional = async keys => s3Service.stocksSelect(process.env.select_bucket).getOptionalStocks(keys ? keys : defaultKeys)
 
+exports.tickerOptional = async ticker => s3Service.stocksSelect(process.env.select_bucket).getOptionalStock(ticker)

@@ -107,6 +107,14 @@ functions:
         cors: true
         path: stocks/optionable
         method: get
+  optionalStock:
+    runtime: nodejs12.x
+    handler: s3select.optionalStock
+    events:
+    - http:
+        cors: true
+        path: stock/optionable/{ticker}
+        method: get
   putToStream:
     runtime: nodejs12.x
     handler: fhController.putToStream

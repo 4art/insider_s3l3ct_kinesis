@@ -20,6 +20,7 @@ exports.stocksSelect = (bucket) => new StocksSelect(bucket);
 
 function StocksSelect(bucket) {
     this.getOptionalStocks = keys => select(bucket, "stocks_optional.json", generateQuery(keys))
+    this.getOptionalStock = ticker => select(bucket, "stocks_optional.json", generateQuery(["*"], `s.Ticker = '${ticker.toString().toUpperCase()}'`))
     this.getStocks = (keys=[]) => select(bucket, "stocks.json", generateQuery(keys))
 }
 
