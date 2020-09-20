@@ -52,7 +52,8 @@ class Stock_screener:
                 self.done = True
                 return
             conv_obj=self.convert_data_types(obj)
-            self.l.append(conv_obj)
+            if not filter(lambda v: v["Ticker"] == conv_obj["Ticker"], self.l):
+                self.l.append(conv_obj)
     
     def convert_data_types(self, obj):
         obj['Market Cap Val'] = self.convert_big_value(obj['Market Cap'])
