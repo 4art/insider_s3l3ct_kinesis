@@ -52,7 +52,8 @@ class Stock_screener:
                 self.done = True
                 return
             conv_obj=self.convert_data_types(obj)
-            if not filter(lambda v: v["Ticker"] == conv_obj["Ticker"], self.l):
+            duplicates = list(filter(lambda v: v["Ticker"] == conv_obj["Ticker"], self.l))
+            if not duplicates:
                 self.l.append(conv_obj)
     
     def convert_data_types(self, obj):
