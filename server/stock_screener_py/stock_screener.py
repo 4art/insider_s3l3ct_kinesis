@@ -53,8 +53,10 @@ class Stock_screener:
                 return
             conv_obj=self.convert_data_types(obj)
             duplicates = list(filter(lambda v: v["Ticker"] == conv_obj["Ticker"], self.l))
-            if not duplicates:
-                self.l.append(conv_obj)
+            if duplicates:
+                self.done = True
+                return
+            self.l.append(conv_obj)
     
     def convert_data_types(self, obj):
         obj['Market Cap Val'] = self.convert_big_value(obj['Market Cap'])
