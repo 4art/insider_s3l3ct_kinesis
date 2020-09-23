@@ -11,8 +11,9 @@ package:
     - .vscode/**
     - venv/**
     - env/**
-    - stock_screener/venv/**
-    - stock_screener/env/**
+    - stock_screener_py/venv/**
+    - stock_screener_py/env/**
+    - stock_screener_py/__pycache__/**
     - bin/**
     - lib/**
     - test/**
