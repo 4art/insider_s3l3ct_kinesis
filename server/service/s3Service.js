@@ -17,6 +17,7 @@ exports.upload = (body, key, bucket) => {
 
 exports.tradesSelect = (bucket) => new TradesSelect(bucket);
 exports.stocksSelect = (bucket) => new StocksSelect(bucket);
+exports.proxiesSelect = (bucket) => new ProxiesSelect(bucket);
 
 function StocksSelect(bucket) {
     this.getOptionalStocks = keys => select(bucket, "stocks_optional.json", generateQuery(keys))
@@ -104,9 +105,14 @@ const select = (bucket, key, query) => {
     })
 };
 
+function ProxiesSelect(bucket) {
+    this.getAllProxies = () => select(bucket, "allProxies.json", generateQuery(["*"]))
+    this.getWorkedProxies = () => select(bucket, "workedProxies.json", generateQuery(["*"]))
+}
+
 function generateQuery(keys=[], where="", limit="") {
     console.log(`Generating query from keys: ${keys}, where: ${where}, limit:${limit}}`)
-    let result = `SELECT ${keys.map(v => `s.${v}`).join(", ")} FROM s3object s`
+    let result = `SELECT ${keys.map(v => `s."${v}"`).join(", ")} FROM s3object s`
     if(where) {
         result += ` WHERE ${where}`
     }

@@ -3,6 +3,7 @@
 const tradesService = require('./service/tradesService');
 const s3Service = require('./service/s3Service');
 const stocksService = require('./service/stocksService');
+const proxiesService = require('./service/proxiesService');
 const financeService = require('./service/financeService');
 const converter = require('./service/converter');
 const helper = require('./service/helper');
@@ -32,3 +33,5 @@ exports.companyHistoricalChartData = async event => helper.getLambdaResponse(awa
 exports.optionalStocks = async event => helper.getLambdaResponse(await stocksService.optional(event.queryStringParameters ? Array.isArray(event.queryStringParameters.keys) ? event.queryStringParameters.keys : null : null));
 
 exports.optionalStock = async event => helper.getLambdaResponse(await stocksService.tickerOptional(event.pathParameters.ticker));
+
+exports.updateAllProxies = async event => helper.getLambdaResponse(await proxiesService.updateAllProxies().then(v => `{"status": "Proxies updated"}`));

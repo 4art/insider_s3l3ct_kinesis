@@ -5,7 +5,8 @@
   "main": "create.js",
   "scripts": {
     "test": "mocha app_test.js",
-    "deploy": "npm run build --prefix ../insider-gui/ && sls deploy -v"
+    "deploy": "npm run build --prefix ../insider-gui/ && sls deploy -v",
+    "debug": "node --nolazy service/proxiesService.js"
   },
   "author": "metraf",
   "license": "ISC",

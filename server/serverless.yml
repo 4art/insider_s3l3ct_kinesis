@@ -10,10 +10,12 @@ package:
   exclude:
     - .vscode/**
     - venv/**
+    - env/**
     - stock_screener/venv/**
     - stock_screener/env/**
     - bin/**
     - lib/**
+    - test/**
 
 provider:
   name: aws
@@ -137,6 +139,13 @@ functions:
     handler: stock_screener_py/stock_screener.save_all_optionable
     timeout: 900
     memorySize: 3008
+    events:
+      - schedule: rate(15 minutes)
+      #- schedule: cron(0/15 * * * MON-FRI *)
+  update_all_proxies:
+    runtime: nodejs12.x
+    handler: s3select/updateAllProxies
+    timeout: 900
     events:
       - schedule: rate(15 minutes)
       #- schedule: cron(0/15 * * * MON-FRI *)
