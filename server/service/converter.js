@@ -7,16 +7,16 @@ exports.convertArrToS3Json = (arr, str = "") => {
     return str
 };
 exports.convertKeysForS3Json = (promise) => promise.then(arr => arr.map(o => {
-        Object.keys(o).forEach(old_key => {
-            var new_key = old_key.replace(/\s/g, '_');
-            if (old_key !== new_key) {
-                Object.defineProperty(o, new_key,
-                    Object.getOwnPropertyDescriptor(o, old_key));
-                delete o[old_key];
-            }
-        });
-        return o
-    }
+    Object.keys(o).forEach(old_key => {
+        var new_key = old_key.replace(/\s/g, '_');
+        if (old_key !== new_key) {
+            Object.defineProperty(o, new_key,
+                Object.getOwnPropertyDescriptor(o, old_key));
+            delete o[old_key];
+        }
+    });
+    return o
+}
 ));
 
 exports.removeDuplicates = (myArr, prop) => myArr.filter((obj, pos, arr) => arr.map(mapObj => mapObj[prop]).indexOf(obj[prop]) === pos);
@@ -31,8 +31,8 @@ exports.isScvValidUrl = URL => new Promise((res, rej) => {
 exports.getDiffFromTwoArr = (oldArr = [], newArr = []) => oldArr.length === newArr.length ? [] : newArr.filter(v => underscore.isUndefined(oldArr.find(o => underscore.isEqual(v, o))));
 
 exports.bafinMoneyToObject = moneyString => {
-    if(typeof moneyString !== "string") return moneyString
-    if (!moneyString) return {value: 0, currency: ""}
+    if (typeof moneyString !== "string") return moneyString
+    if (!moneyString) return { value: 0, currency: "" }
     const preparedString = moneyString.replace(/\./g, "").replace(",", ".");
     return {
         value: parseFloat(preparedString),
@@ -64,3 +64,9 @@ exports.convertDataFormatForTrades = trades => trades.map(v => ({
     "Date_of_transaction": exports.bafinStringDate(v["Date_of_transaction"]),
     "Date_of_activation": exports.bafinStringDate(v["Date_of_activation"])
 }))
+
+exports.millisToMinutesAndSeconds = millis => {
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}

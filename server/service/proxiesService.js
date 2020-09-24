@@ -3,7 +3,7 @@ const s3Service = require('./s3Service');
 const converter = require('./converter');
 const helper = require('./converter');
 const { Converter } = require('aws-sdk/clients/dynamodb');
-process.env.select_bucket = "myinsiderposition-dev"
+//process.env.select_bucket = "myinsiderposition-dev"
 const ipRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/gm;
 
 exports.proxiesService = new ProxiesService()
@@ -29,18 +29,46 @@ function ProxiesService() {
     this.getMergedProxies = async () => {
         let oldProxies = s3Service.proxiesSelect(process.env.select_bucket).getAllProxies().then(v => JSON.parse(v))
         let newProxies = await this.findNewProxies()
-        return oldProxies.then(v => 
+        return oldProxies.then(v =>
             v.concat(newProxies))
-        .then(v => 
-            converter.removeDuplicates(v, "host"))
+            .then(v =>
+                converter.removeDuplicates(v, "host"))
     }
 
     this.updateAllProxies = async () => {
         const l = await this.getMergedProxies()
+        const testedProxiesPromise = this.updateTestedProxies(l)
         const s = converter.convertArrToS3Json(l)
-        return s3Service.upload(s, "allProxies.json", process.env.select_bucket)
+        await s3Service.upload(s, "allProxies.json", process.env.select_bucket)
+        const w = converter.convertArrToS3Json(await testedProxiesPromise)
+        return s3Service.upload(w, "testedProxies.json", process.env.select_bucket)
     }
 
-}
+    this.updateTestedProxies = async (allProxies) => {
+        let promises = allProxies.map(async (v, index) => {
+            let start = new Date()
+            let result = {}
+            await axios.get("https://www.google.com", { proxy: v, timeout: 30000 })
+                .then(response => {
+                    let end = new Date() - start
+                    console.log(`Successed index: ${index} obj: ${JSON.stringify({ ...v, timeMs: end })}`)
+                    result = {
+                        ...v,
+                        timeMs: end,
+                        success: true
+                    }
+                    return result
+                })
+                .catch(err => {
+                    console.log(`Failed index: ${index}, obj: ${JSON.stringify({ ...v, err: err.toString() })}`)
+                    result = { ...v, err: err.toString(), success: false }
+                })
+            return result
+        })
+        let result = await Promise.all(promises)
+        return result
+    }
 
-new ProxiesService().updateAllProxies()
+    this.getWorkedProxies = () => s3Service.proxiesSelect(process.env.select_bucket).getWorkedProxies()
+
+}
