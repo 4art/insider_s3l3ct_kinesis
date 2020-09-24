@@ -108,7 +108,7 @@ const select = (bucket, key, query) => {
 
 function ProxiesSelect(bucket) {
     this.getAllProxies = () => select(bucket, "allProxies.json", generateQuery(["*"]))
-    this.getWorkedProxies = () => select(bucket, "testedProxies.json", generateQuery(["*", "s.success = true"]))
+    this.getWorkedProxies = () => select(bucket, "testedProxies.json", generateQuery(["*"], "s.success = true"))
 }
 
 function generateQuery(keys=[], where="", limit="") {

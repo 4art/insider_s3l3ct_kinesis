@@ -3,7 +3,7 @@ const s3Service = require('./s3Service');
 const converter = require('./converter');
 const helper = require('./converter');
 const { Converter } = require('aws-sdk/clients/dynamodb');
-//process.env.select_bucket = "myinsiderposition-dev"
+process.env.select_bucket = "myinsiderposition-dev"
 const ipRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/gm;
 
 exports.proxiesService = new ProxiesService()
@@ -69,6 +69,11 @@ function ProxiesService() {
         return result
     }
 
-    this.getWorkedProxies = () => s3Service.proxiesSelect(process.env.select_bucket).getWorkedProxies()
+    this.getWorkedProxies = () => s3Service.proxiesSelect(process.env.select_bucket).getWorkedProxies().then(v => 
+        JSON.parse(v).sort((a, b) => b.timeMs-a.timeMs))
 
 }
+
+new ProxiesService().getWorkedProxies().then(v => {
+    console.log(v)
+})
