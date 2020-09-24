@@ -98,6 +98,7 @@ const select = (bucket, key, query) => {
             eventStream.on('end', () => {
                 console.log("finished event stream");
                 let result = `[${arr.join('').replace(/\}\s+\{/g, '}, {')}]`;
+                result = result.replace(`{"_1": {}}`, "")
                 res(result)
             });
 
@@ -112,7 +113,7 @@ function ProxiesSelect(bucket) {
 
 function generateQuery(keys=[], where="", limit="") {
     console.log(`Generating query from keys: ${keys}, where: ${where}, limit:${limit}}`)
-    let result = `SELECT ${keys.map(v => `s."${v}"`).join(", ")} FROM s3object s`
+    let result = `SELECT ${keys.map(v => v != "*" ? `s."${v}"` : `s.${v}`).join(", ")} FROM s3object s`
     if(where) {
         result += ` WHERE ${where}`
     }

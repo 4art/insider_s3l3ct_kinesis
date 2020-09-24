@@ -29,7 +29,8 @@ function ProxiesService() {
     this.getMergedProxies = async () => {
         let oldProxies = s3Service.proxiesSelect(process.env.select_bucket).getAllProxies().then(v => JSON.parse(v))
         let newProxies = await this.findNewProxies()
-        return oldProxies.then(v => v.concat(newProxies))
+        return oldProxies.then(v => 
+            v.concat(newProxies))
         .then(v => 
             converter.removeDuplicates(v, "host"))
     }
@@ -41,3 +42,5 @@ function ProxiesService() {
     }
 
 }
+
+new ProxiesService().updateAllProxies()
