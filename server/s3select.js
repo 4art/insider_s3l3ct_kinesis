@@ -34,4 +34,4 @@ exports.optionalStocks = async event => helper.getLambdaResponse(await stocksSer
 
 exports.optionalStock = async event => helper.getLambdaResponse(await stocksService.tickerOptional(event.pathParameters.ticker));
 
-exports.updateAllProxies = async event => helper.getLambdaResponse(await proxiesService.updateAllProxies().then(v => `{"status": "Proxies updated"}`));
+exports.updateAllProxies = async event => helper.getLambdaResponse(await proxiesService.proxiesService.updateAllProxies().then(v => JSON.stringify({proxies: v.filter(v => v.success), status: "Proxies updated"})));

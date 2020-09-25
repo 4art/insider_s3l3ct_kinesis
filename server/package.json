@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha app_test.js",
     "deploy": "npm run build --prefix ../insider-gui/ && sls deploy -v",
-    "debug": "node --nolazy service/proxiesService.js"
+    "debug": "node --nolazy s3select.js"
   },
   "author": "metraf",
   "license": "ISC",

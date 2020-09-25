@@ -65,6 +65,7 @@ functions:
     handler: s3select.create
     cors: true
     timeout: 300
+    memorySize: 256
     events:
     - schedule: rate(2 hours)
     - http:
@@ -81,6 +82,7 @@ functions:
   selectS3Companies:
     runtime: nodejs12.x
     handler: s3select.companiesDE
+    memorySize: 256
     events:
     - http:
         cors: true
@@ -89,6 +91,7 @@ functions:
   selectCompaniesChartHistoricPrices:
     runtime: nodejs12.x
     handler: s3select.companyHistoricalChartData
+    memorySize: 256
     events:
     - http:
         cors: true
@@ -97,6 +100,7 @@ functions:
   selectS3Insiders:
     runtime: nodejs12.x
     handler: s3select.insidersDE
+    memorySize: 256
     events:
     - http:
         cors: true
@@ -105,6 +109,7 @@ functions:
   optionalStocks:
     runtime: nodejs12.x
     handler: s3select.optionalStocks
+    memorySize: 512
     events:
     - http:
         cors: true
@@ -113,6 +118,7 @@ functions:
   optionalStock:
     runtime: nodejs12.x
     handler: s3select.optionalStock
+    memorySize: 256
     events:
     - http:
         cors: true
@@ -139,21 +145,22 @@ functions:
   collect_optional_stocks:
     handler: stock_screener_py/stock_screener.save_all_optionable
     timeout: 900
-    memorySize: 3008
+    memorySize: 256
     events:
-      - schedule: rate(15 minutes)
+      - schedule: rate(30 minutes)
       #- schedule: cron(0/15 * * * MON-FRI *)
   update_all_proxies:
     runtime: nodejs12.x
-    handler: s3select/updateAllProxies
+    handler: s3select.updateAllProxies
     timeout: 900
+    memorySize: 256
     events:
       - schedule: rate(15 minutes)
       #- schedule: cron(0/15 * * * MON-FRI *)
   collect_stocks:
     handler: stock_screener_py/stock_screener.save_all
     timeout: 900
-    memorySize: 3008
+    memorySize: 512
 
 resources:
   Resources:
