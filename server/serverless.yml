@@ -161,6 +161,11 @@ functions:
     handler: stock_screener_py/stock_screener.save_all
     timeout: 900
     memorySize: 512
+  get_all_proxies:
+    runtime: nodejs12.x
+    handler: s3select.getAllProxies
+    timeout: 900
+    memorySize: 256
 
 resources:
   Resources:
