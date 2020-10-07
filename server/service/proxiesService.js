@@ -49,9 +49,10 @@ function ProxiesService() {
         let promises = allProxies.map(async (v, index) => {
             let start = new Date()
             let result = {}
-            await axios.get("https://www.google.com", { proxy: v, timeout: 30000 })
+            await axios.get("http://dummy.restapiexample.com/api/v1/employees", { proxy: v, timeout: 30000 })
                 .then(response => {
                     let end = new Date() - start
+                    JSON.stringify(response.data)
                     console.log(`Successed index: ${index} obj: ${JSON.stringify({ ...v, timeMs: end })}`)
                     result = {
                         ...v,
@@ -72,5 +73,7 @@ function ProxiesService() {
 
     this.getWorkedProxies = () => s3Service.proxiesSelect(process.env.select_bucket).getWorkedProxies().then(v => 
         JSON.parse(v).sort((a, b) => b.timeMs-a.timeMs))
+
+    this.getAllProxies = () => s3Service.proxiesSelect(process.env.select_bucket).getAllProxies().then(v => JSON.parse(v))
 
 }

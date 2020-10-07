@@ -147,7 +147,7 @@ functions:
     timeout: 900
     memorySize: 256
     events:
-      - schedule: rate(30 minutes)
+      - schedule: rate(7 days)
       #- schedule: cron(0/15 * * * MON-FRI *)
   update_all_proxies:
     runtime: nodejs12.x
