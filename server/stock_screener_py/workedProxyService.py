@@ -84,7 +84,7 @@ class WorkedProxyService:
                     text = await response.read()
                     jsonstring = json.loads(text)
                     self.workedProxies.append(proxy)
-                    print("Added proxy {}. worked: {}, wrong: {}, allCount: {}".format(proxy, len(self.workedProxies), self.wrongProxiesCount, len(self.proxies)))
+                    #print("Added proxy {}. worked: {}, wrong: {}, allCount: {}".format(proxy, len(self.workedProxies), self.wrongProxiesCount, len(self.proxies)))
         except:
             logging.debug("proxy {} is wrong".format(proxy))
             self.wrongProxiesCount += 1
