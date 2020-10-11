@@ -32,6 +32,7 @@ provider:
     - s3:*
     - firehose:*
     - glue:*
+    - lambda:InvokeFunction
   environment:
     select_bucket: ${self:custom.select_bucket}
     deliveryStreamDE: ${self:custom.deliveryStreamDE}
@@ -156,7 +157,12 @@ functions:
     memorySize: 256
     events:
       - schedule: rate(15 minutes)
-      #- schedule: cron(0/15 * * * MON-FRI *)
+  update_worked_proxies:
+    handler: stock_screener_py/workedProxyService.uploadWorkedProxies
+    timeout: 900
+    memorySize: 2048
+    events:
+      - schedule: rate(3 hours)
   collect_stocks:
     handler: stock_screener_py/stock_screener.save_all
     timeout: 900
@@ -164,6 +170,11 @@ functions:
   get_all_proxies:
     runtime: nodejs12.x
     handler: s3select.getAllProxies
+    timeout: 900
+    memorySize: 256
+  get_worked_proxies:
+    runtime: nodejs12.x
+    handler: s3select.getWorkedProxies
     timeout: 900
     memorySize: 256
 

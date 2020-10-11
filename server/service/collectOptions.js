@@ -7,7 +7,7 @@ const s3Service = require('./s3Service');
 
 async function collect_options() {
     const stocksPromise = s3Service.stocksSelect(process.env.select_bucket).getOptionalStocks(["Ticker", "Market Cap Val"]).then(v => JSON.parse(v)).then(v => v.sort((a, b) => b["Market Cap Val"] - a["Market Cap Val"]));
-    const allProxiesPromise = proxiesService.getAllProxies();
+    const allProxiesPromise = proxiesService.getWorkedProxies();
     var stocks = await stocksPromise
     let allProxies = await allProxiesPromise;
     let proxiesCopy = [];
