@@ -78,8 +78,9 @@ class WorkedProxyService:
     async def testProxy(self, proxy):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+        timeout = aiohttp.ClientTimeout(total=60)
         try:
-            async with ClientSession() as session:
+            async with ClientSession(timeout=timeout) as session:
                 async with session.get('https://demo-live-data.highcharts.com/aapl-c.json', headers=headers, proxy="http://{}:{}".format(proxy['host'], proxy['port'])) as response:
                     text = await response.read()
                     jsonstring = json.loads(text)

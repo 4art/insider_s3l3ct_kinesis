@@ -49,21 +49,21 @@ async function collect_options() {
         })
     )*/
 
-        let optionsPromise = stocks.map(v => v.Ticker).map(async(ticker, i) => {
-            return await get_options(ticker).then(v => {
-                /*if (typeof v !== 'undefined' && v) {
-                    const mapedOptions = map_options(ticker, v);
-                    options.push(mapedOptions)
-                    stocks.splice(i, 1)
-                }*/
-                return map_options(ticker, v);
-            }).catch(err => {
-                console.warn(`Error occupied with ticker: ${ticker} proxy: ${proxy.host}:${proxy.port}`)
-            })
-        }
-        )
-        let options = await Promise.all(optionsPromise)
-        return options
+    let optionsPromise = stocks.map(v => v.Ticker).map(async (ticker, i) => {
+        return await get_options(ticker).then(v => {
+            /*if (typeof v !== 'undefined' && v) {
+                const mapedOptions = map_options(ticker, v);
+                options.push(mapedOptions)
+                stocks.splice(i, 1)
+            }*/
+            return map_options(ticker, v);
+        }).catch(err => {
+            console.warn(`Error occupied with ticker: ${ticker} proxy: ${proxy.host}:${proxy.port}`)
+        })
+    }
+    )
+    let options = await Promise.all(optionsPromise)
+    return options
 }
 
 function get_options(ticker, prxies = []) {
@@ -73,12 +73,12 @@ function get_options(ticker, prxies = []) {
         return new Promise((res, rej) => {
             prxies.map(v => ({ proxy: { host: v.host, port: v.port }, timeout: 30000 })).forEach(async prx => {
                 axios.get(url, prx)
-                .then(function (response) {
-                    res(response.data)
-                }).catch(err => {
-                    console.warn(`Error occupied with ticker: ${ticker} proxy: ${prx.proxy.host}:${prx.proxy.port}`)
-                    rej(err)
-                })
+                    .then(function (response) {
+                        res(response.data)
+                    }).catch(err => {
+                        console.warn(`Error occupied with ticker: ${ticker} proxy: ${prx.proxy.host}:${prx.proxy.port}`)
+                        rej(err)
+                    })
             })
         })
     }
@@ -90,48 +90,38 @@ function get_options(ticker, prxies = []) {
         })
 }
 
-function map_options(ticker, obj) {
-    const options = Object.entries(obj.options).map(obj => {
-        let result = []
-        if (obj[1].c) {
+exports.map_options = (ticker, obj, datetime) => Object.entries(obj.options).map(obj => {
+    let result = []
+    if (obj[1].c) {
+        Object.entries(obj[1].c).forEach(v => {
             result.push({
-                date: new Date(),
+                datetime: datetime,
+                ticker: ticker,
                 exp: obj[0],
-                type: "call",
-                options: Object.entries(obj[1].c).map(v => {
-                    return {
-                        strike: parseFloat(v[0]),
-                        ask: parseFloat(v[1].a),
-                        bid: parseFloat(v[1].b),
-                        mid: parseFloat(v[1].l),
-                        volume: parseFloat(v[1].v),
-                    }
-                })
+                type: "CALL",
+                strike: parseFloat(v[0]),
+                ask: parseFloat(v[1].a),
+                bid: parseFloat(v[1].b),
+                mid: parseFloat((parseFloat(v[1].l) == 0 ? (parseFloat(v[1].b) + parseFloat(v[1].a)) / 2 : parseFloat(v[1].l)).toFixed(1)),
+                volume: parseFloat(v[1].v)
             })
-        }
-        if (obj[1].p) {
-            result.push({
-                date: new Date(),
-                exp: obj[0],
-                type: "put",
-                options: Object.entries(obj[1].p).map(v => {
-                    return {
-                        strike: parseFloat(v[0]),
-                        ask: parseFloat(v[1].a),
-                        bid: parseFloat(v[1].b),
-                        mid: parseFloat(v[1].l),
-                        volume: parseFloat(v[1].v),
-                    }
-                })
-            })
-        }
-        return result
-
-    }).flat()
-    return {
-        ticker: ticker,
-        options: options
+        })
     }
-}
+    if (obj[1].p) {
+        Object.entries(obj[1].p).forEach(v => {
+            result.push({
+                datetime: datetime,
+                ticker: ticker,
+                exp: obj[0],
+                type: "PUT",
+                strike: parseFloat(v[0]),
+                ask: parseFloat(v[1].a),
+                bid: parseFloat(v[1].b),
+                mid: parseFloat((parseFloat(v[1].l) == 0 ? (parseFloat(v[1].b) + parseFloat(v[1].a)) / 2 : parseFloat(v[1].l)).toFixed(1)),
+                volume: parseFloat(v[1].v)
+            })
+        })
+    }
+    return result
 
-collect_options()
+}).flat()

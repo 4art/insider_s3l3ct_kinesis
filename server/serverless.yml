@@ -45,6 +45,7 @@ custom:
   select_bucket: myinsiderposition-${self:provider.stage}
   deliveryStreamDE: insider-de-stream-${self:provider.stage}
   insiderDBGlue: insider-de-database-glue-${self:provider.stage}
+  optionsCollectSqs: options-collect-sqs-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
   siteName: myinsiderposition.com
   aliasHostedZoneId: Z21DNDUVLTQW6Q
@@ -177,6 +178,17 @@ functions:
     handler: s3select.getWorkedProxies
     timeout: 900
     memorySize: 256
+  optionsCollectSqs:
+    runtime: nodejs12.x
+    handler: sqsEvents.optionsCollectSqs
+    timeout: 30
+    memorySize: 256
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - OptionsCollectSqs
+              - Arn
 
 resources:
   Resources:
@@ -257,6 +269,10 @@ resources:
                 "/*"
               ]
               ]
+    OptionsCollectSqs:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.optionsCollectSqs}
 #    DnsRecord:
 #      Type: "AWS::Route53::RecordSet"
 #      Properties:
