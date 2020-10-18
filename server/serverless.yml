@@ -182,7 +182,7 @@ functions:
     runtime: nodejs12.x
     handler: sqsEvents.optionsCollectSqs
     timeout: 30
-    memorySize: 256
+    memorySize: 128
     events:
       - sqs:
           arn:

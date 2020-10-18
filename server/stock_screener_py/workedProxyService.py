@@ -1,6 +1,8 @@
 from aiohttp import ClientSession
+import aiohttp
 import logging
 import nest_asyncio
+import datetime
 import json
 import asyncio
 import random
@@ -8,6 +10,8 @@ import logging
 import boto3
 import re
 import os
+
+os.environ["select_bucket"] = "myinsiderposition-dev"
 
 class LambdaService:
     def get_lambda_json_response(self, lmbd, content=b""):
@@ -81,9 +85,15 @@ class WorkedProxyService:
         timeout = aiohttp.ClientTimeout(total=60)
         try:
             async with ClientSession(timeout=timeout) as session:
-                async with session.get('https://demo-live-data.highcharts.com/aapl-c.json', headers=headers, proxy="http://{}:{}".format(proxy['host'], proxy['port'])) as response:
+                start_time = datetime.datetime.now()
+                async with session.get('https://api.myip.com', headers=headers, proxy="http://{}:{}".format(proxy['host'], proxy['port'])) as response:
+                    end_time = datetime.datetime.now()
                     text = await response.read()
                     jsonstring = json.loads(text)
+                    proxy["country"] = jsonstring["country"]
+                    proxy["cc"] = jsonstring["cc"]
+                    proxy["response_ip"] = jsonstring["ip"]
+                    proxy["ping_sec"] = (end_time-start_time).total_seconds()
                     self.workedProxies.append(proxy)
                     #print("Added proxy {}. worked: {}, wrong: {}, allCount: {}".format(proxy, len(self.workedProxies), self.wrongProxiesCount, len(self.proxies)))
         except:
