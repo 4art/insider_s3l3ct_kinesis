@@ -7,12 +7,16 @@ import nest_asyncio
 import logging
 import aiohttp
 import datetime
+import time
+from time import sleep
 from datetime import timezone
 from aiohttp import ClientSession
 
 client = boto3.client('lambda')
-sqs = boto3.client('sqs')
+fh = boto3.client('firehose')
 
+CHUNK_SIZE = 3
+# TODO use as env variable
 QUEUE_NAME = "https://sqs.eu-central-1.amazonaws.com/763862102163/options-collect-sqs-dev"
 nest_asyncio.apply()
 loop = asyncio.get_event_loop()
@@ -33,6 +37,7 @@ class Options_screener:
         self.proxies = self.get_proxies()
         self.tickers = self.get_tickers()
         self.options = []
+        self.option_json = []
 
     def get_url(self, ticker):
         return "https://www.optionsprofitcalculator.com/ajax/getOptions?stock={}&reqId=1".format(ticker)
@@ -53,34 +58,52 @@ class Options_screener:
             input_coroutines = list(map(lambda ticker: asyncio.ensure_future(
                 self.addOption(ticker)), self.tickers))
             await asyncio.gather(*input_coroutines, return_exceptions=False)
+            records = list(map(lambda el: {'Data': el}, self.option_json))
+            for record in chunks(records, 500):
+                response = fh.put_record_batch(
+                            DeliveryStreamName='options-stream-dev',
+                            Records=record
+                        )
+                sleep(1)
+                if response['FailedPutCount'] > 0:
+                    print(response)
+            self.option_json = []
+            #ch = chunks(self.options, CHUNK_SIZE)
+            #ch = [self.options[i:i + CHUNK_SIZE]
+            #      for i in range(0, len(self.options), CHUNK_SIZE)]
+            #list(map(lambda el: sqs.send_message(
+            #    QueueUrl=QUEUE_NAME, MessageBody=json.dumps(el)), ch))
+            ##self.options = []
         return self.options
 
     def convertOptionsAndpush(self, ticker, options):
         self.tickers.remove(ticker)
         print("saving options for {}, proxies size: {}, tickers size: {}".format(
             ticker, len(self.proxies), len(self.tickers)))
-        obj = {
-            "ticker": ticker,
-            "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%d-%m %H:%M:%S"),
-            "options": options
-        }
-        jstr = json.dumps(obj)
-        sqs.send_message(QueueUrl=QUEUE_NAME, MessageBody=jstr)
+        # obj = {
+        #    "ticker": ticker,
+        #    "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
+        #    "options": options
+        # }
+        # self.options.append(obj)
         #print("added options for {}".format(ticker))
-        # for exp in options['options']:
-        #    for t in options['options'][exp]:
-        #        for strike in options['options'][exp][t]:
-        #            self.options.append({
-        #                "ticker": ticker,
-        #                "strike": float(strike),
-        #                "ask": float(options['options'][exp][t][strike]["a"]),
-        #                "bid": float(options['options'][exp][t][strike]["b"]),
-        #                "mid": float(options['options'][exp][t][strike]["l"]),
-        #                "volume": float(options['options'][exp][t][strike]["v"]),
-        #                "datetime": datetime.datetime.now(),
-        #                "exp": exp,
-        #                "type": type
-        #            })
+        for exp in options['options']:
+            for t in options['options'][exp]:
+                for strike in options['options'][exp][t]:
+                    option = {
+                        "ticker": ticker,
+                        "strike": float(strike),
+                        "ask": float(options['options'][exp][t][strike]["a"]),
+                        "bid": float(options['options'][exp][t][strike]["b"]),
+                        "mid": float(options['options'][exp][t][strike]["l"]),
+                        "volume": float(options['options'][exp][t][strike]["v"]),
+                        "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        "exp": exp,
+                        "type": 'CALL' if t == 'c' else 'PUT'
+                    }
+                    option_json = json.dumps(option).encode()
+                    self.option_json.append(option_json)
+                    #print(response)
         # self.options.append(options)
 
     async def addOption(self, ticker):
@@ -88,7 +111,7 @@ class Options_screener:
         #proxy = {"http": self.proxies[proxy_index], "https": self.proxies[proxy_index]}
         proxy = self.proxies[proxy_index]
         timeout = aiohttp.ClientTimeout(total=45)
-        #response = sqs.send_message(
+        # response = sqs.send_message(
         #    QueueUrl=QUEUE_NAME, MessageBody=json.dumps({"text": "bla bla"}))
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -107,6 +130,10 @@ class Options_screener:
             except:
                 logging.debug("{} is already removed".format(proxy))
             self.addOption(ticker)
+
+
+def chunks(lst, n):
+    return [lst[i:i + n] for i in range(0, len(lst), n)]
 
 
 if __name__ == "__main__":

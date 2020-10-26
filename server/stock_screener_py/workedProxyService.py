@@ -11,8 +11,6 @@ import boto3
 import re
 import os
 
-os.environ["select_bucket"] = "myinsiderposition-dev"
-
 class LambdaService:
     def get_lambda_json_response(self, lmbd, content=b""):
         response = client.invoke(
