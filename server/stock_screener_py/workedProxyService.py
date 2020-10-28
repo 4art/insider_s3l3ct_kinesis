@@ -70,9 +70,11 @@ class WorkedProxyService:
 
     async def uploadWorked(self):
         print("start worked test")
-        input_coroutines = list(
-            map(lambda prx: asyncio.ensure_future(self.testProxy(prx)), self.proxies))
-        await asyncio.gather(*input_coroutines, return_exceptions=False)
+        for chunk in chunks(self.proxies, 60):
+            input_coroutines = list(
+                map(lambda prx: asyncio.ensure_future(self.testProxy(prx)), chunk))
+            await asyncio.gather(*input_coroutines, return_exceptions=False)
+            print("worked proxies count: {}".format(len(self.workedProxies)))
         print("Put worked proxies")
         s3Service.put_worked_proxies(self.workedProxies)
         print("preparing response")
@@ -80,7 +82,7 @@ class WorkedProxyService:
     async def testProxy(self, proxy):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
-        timeout = aiohttp.ClientTimeout(total=60)
+        timeout = aiohttp.ClientTimeout(total=25)
         try:
             async with ClientSession(timeout=timeout) as session:
                 start_time = datetime.datetime.now()
@@ -93,10 +95,13 @@ class WorkedProxyService:
                     proxy["response_ip"] = jsonstring["ip"]
                     proxy["ping_sec"] = (end_time-start_time).total_seconds()
                     self.workedProxies.append(proxy)
-                    #print("Added proxy {}. worked: {}, wrong: {}, allCount: {}".format(proxy, len(self.workedProxies), self.wrongProxiesCount, len(self.proxies)))
+                    print("Added proxy {}. worked: {}, wrong: {}, allCount: {}".format(proxy, len(self.workedProxies), self.wrongProxiesCount, len(self.proxies)))
         except:
             logging.debug("proxy {} is wrong".format(proxy))
             self.wrongProxiesCount += 1
+
+def chunks(lst, n):
+    return [lst[i:i + n] for i in range(0, len(lst), n)]
 
 if __name__ == "__main__":
     uploadWorkedProxies("", "")

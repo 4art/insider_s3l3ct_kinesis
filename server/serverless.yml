@@ -175,6 +175,12 @@ functions:
     memorySize: 2048
     events:
       - schedule: rate(3 hours)
+  upload_options:
+    handler: stock_screener_py/options_screener.uploadOptions
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: rate(15 minutes)
   collect_stocks:
     handler: stock_screener_py/stock_screener.save_all
     timeout: 900
@@ -345,7 +351,7 @@ resources:
               - Name: datetime 
                 Type: timestamp 
               - Name: exp 
-                Type: string 
+                Type: timestamp
               - Name: type 
                 Type: string 
             InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat 

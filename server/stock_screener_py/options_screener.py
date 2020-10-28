@@ -1,3 +1,4 @@
+import os
 import boto3
 import requests
 import json
@@ -38,6 +39,7 @@ class Options_screener:
         self.tickers = self.get_tickers()
         self.options = []
         self.option_json = []
+        self.optionsDS = os.environ.get('optionsDeliveryStream')
 
     def get_url(self, ticker):
         return "https://www.optionsprofitcalculator.com/ajax/getOptions?stock={}&reqId=1".format(ticker)
@@ -53,25 +55,28 @@ class Options_screener:
     async def getOptions(self):
         # for ticker in self.tickers:
         #    self.addOption(ticker)
+        print("delivery_stream_name: {}".format(self.optionsDS))
         while len(self.tickers) > 0:
             print("Running get Options")
             input_coroutines = list(map(lambda ticker: asyncio.ensure_future(
                 self.addOption(ticker)), self.tickers))
             await asyncio.gather(*input_coroutines, return_exceptions=False)
-            records = list(map(lambda el: {'Data': el}, self.option_json))
+            records = list(
+                map(lambda el: {'Data': el.encode()}, self.option_json))
             for record in chunks(records, 500):
                 response = fh.put_record_batch(
-                            DeliveryStreamName='options-stream-dev',
-                            Records=record
-                        )
-                sleep(1)
+                    DeliveryStreamName=self.optionsDS,
+                    Records=record
+                )
+                sleep(1.5)
                 if response['FailedPutCount'] > 0:
                     print(response)
             self.option_json = []
+
             #ch = chunks(self.options, CHUNK_SIZE)
-            #ch = [self.options[i:i + CHUNK_SIZE]
+            # ch = [self.options[i:i + CHUNK_SIZE]
             #      for i in range(0, len(self.options), CHUNK_SIZE)]
-            #list(map(lambda el: sqs.send_message(
+            # list(map(lambda el: sqs.send_message(
             #    QueueUrl=QUEUE_NAME, MessageBody=json.dumps(el)), ch))
             ##self.options = []
         return self.options
@@ -98,12 +103,15 @@ class Options_screener:
                         "mid": float(options['options'][exp][t][strike]["l"]),
                         "volume": float(options['options'][exp][t][strike]["v"]),
                         "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
-                        "exp": exp,
+                        "exp": "{} 23:59:59.000000".format(exp),
                         "type": 'CALL' if t == 'c' else 'PUT'
                     }
-                    option_json = json.dumps(option).encode()
+                    option_json = json.dumps(option)
+                    #response = fh.put_record(DeliveryStreamName='options-stream-dev', Record={'Data': option_json.encode()})
+                    # while fh.put_record(DeliveryStreamName='options-stream-dev', Record={'Data': option_json.encode()})['ResponseMetadata']['HTTPStatusCode'] != 200:
+                    #    print("trying to save {}".format(option_json))
                     self.option_json.append(option_json)
-                    #print(response)
+                    # print(response)
         # self.options.append(options)
 
     async def addOption(self, ticker):
@@ -135,6 +143,16 @@ class Options_screener:
 def chunks(lst, n):
     return [lst[i:i + n] for i in range(0, len(lst), n)]
 
+def uploadOptions(event, context):
+    print("start")
+    if datetime.datetime.today().weekday() < 5:
+        loop.run_until_complete(Options_screener().getOptions())
+    return '''
+    {
+        "status": "Successfully uploaded options"
+    }
+    '''
+
 
 if __name__ == "__main__":
-    loop.run_until_complete(Options_screener().getOptions())
+    uploadOptions("", "")
