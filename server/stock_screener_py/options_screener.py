@@ -9,6 +9,8 @@ import logging
 import aiohttp
 import datetime
 import time
+import itertools
+import pandas as pd
 from time import sleep
 from datetime import timezone
 from aiohttp import ClientSession
@@ -55,64 +57,53 @@ class Options_screener:
     async def getOptions(self):
         # for ticker in self.tickers:
         #    self.addOption(ticker)
+        start_time = time.time()
         print("delivery_stream_name: {}".format(self.optionsDS))
-        while len(self.tickers) > 0:
-            print("Running get Options")
+        while len(self.tickers) > 0 and (time.time() - start_time)/60 < 13:
+            print("Running get Options mins: {}".format(
+                (time.time() - start_time)/60))
             input_coroutines = list(map(lambda ticker: asyncio.ensure_future(
                 self.addOption(ticker)), self.tickers))
             await asyncio.gather(*input_coroutines, return_exceptions=False)
-            records = list(
-                map(lambda el: {'Data': el.encode()}, self.option_json))
-            for record in chunks(records, 500):
-                response = fh.put_record_batch(
-                    DeliveryStreamName=self.optionsDS,
-                    Records=record
-                )
-                sleep(1.5)
-                if response['FailedPutCount'] > 0:
-                    print(response)
+            urls = list(map(lambda x: write_dataframe_to_parquet_on_s3(pd.DataFrame(x["options"]), x["ticker"]), self.options))
+            
+            self.options = []
+            #records = list(
+            #    map(lambda el: {'Data': el.encode()}, self.option_json))
+            #for record in chunks(records, 500):
+            #    response = fh.put_record_batch(
+            #        DeliveryStreamName=self.optionsDS,
+            #        Records=record
+            #    )
+            #    sleep(1.5)
+            #    if response['FailedPutCount'] > 0:
+            #        print(response)
             self.option_json = []
-
-            #ch = chunks(self.options, CHUNK_SIZE)
-            # ch = [self.options[i:i + CHUNK_SIZE]
-            #      for i in range(0, len(self.options), CHUNK_SIZE)]
-            # list(map(lambda el: sqs.send_message(
-            #    QueueUrl=QUEUE_NAME, MessageBody=json.dumps(el)), ch))
-            ##self.options = []
-        return self.options
+        return {"status": "done"}
 
     def convertOptionsAndpush(self, ticker, options):
         self.tickers.remove(ticker)
         print("saving options for {}, proxies size: {}, tickers size: {}".format(
             ticker, len(self.proxies), len(self.tickers)))
-        # obj = {
-        #    "ticker": ticker,
-        #    "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
-        #    "options": options
-        # }
-        # self.options.append(obj)
-        #print("added options for {}".format(ticker))
-        for exp in options['options']:
-            for t in options['options'][exp]:
-                for strike in options['options'][exp][t]:
-                    option = {
-                        "ticker": ticker,
-                        "strike": float(strike),
-                        "ask": float(options['options'][exp][t][strike]["a"]),
-                        "bid": float(options['options'][exp][t][strike]["b"]),
-                        "mid": float(options['options'][exp][t][strike]["l"]),
-                        "volume": float(options['options'][exp][t][strike]["v"]),
-                        "datetime": datetime.datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
-                        "exp": "{} 23:59:59.000000".format(exp),
-                        "type": 'CALL' if t == 'c' else 'PUT'
-                    }
-                    option_json = json.dumps(option)
-                    #response = fh.put_record(DeliveryStreamName='options-stream-dev', Record={'Data': option_json.encode()})
-                    # while fh.put_record(DeliveryStreamName='options-stream-dev', Record={'Data': option_json.encode()})['ResponseMetadata']['HTTPStatusCode'] != 200:
-                    #    print("trying to save {}".format(option_json))
-                    self.option_json.append(option_json)
-                    # print(response)
-        # self.options.append(options)
+        ticker_options = []
+        try:
+            for exp in options['options']:
+                for t in options['options'][exp]:
+                    for strike in options['options'][exp][t]:
+                        option = {
+                            "ticker": ticker,
+                            "strike": float(strike),
+                            "ask": float(options['options'][exp][t][strike]["a"]),
+                            "bid": float(options['options'][exp][t][strike]["b"]),
+                            "mid": float(options['options'][exp][t][strike]["l"]),
+                            "volume": float(options['options'][exp][t][strike]["v"]),
+                            "datetime": datetime.datetime.now(tz=timezone.utc),
+                            "exp": exp,
+                            "type": 'CALL' if t == 'c' else 'PUT'
+                        }
+                        ticker_options.append(option)
+        finally:
+            self.options.append({"ticker": ticker, "options": ticker_options})
 
     async def addOption(self, ticker):
         proxy_index = random.randint(0, len(self.proxies) - 1)
@@ -143,16 +134,32 @@ class Options_screener:
 def chunks(lst, n):
     return [lst[i:i + n] for i in range(0, len(lst), n)]
 
+
 def uploadOptions(event, context):
     print("start")
-    if datetime.datetime.today().weekday() < 5:
-        loop.run_until_complete(Options_screener().getOptions())
+    #if datetime.datetime.today().weekday() < 5:
+    loop.run_until_complete(Options_screener().getOptions())
     return '''
     {
         "status": "Successfully uploaded options"
     }
     '''
 
+
+def write_dataframe_to_parquet_on_s3(dataframe, ticker): #TODO write athena partitions by ALTER TABLE
+    """ Write a dataframe to a Parquet on S3 """
+    dt = datetime.datetime.now(tz=timezone.utc)
+    output_file = "s3://myinsiderposition-dev/options/year={}/month={}/day={}/hour={}/ticker={}/{}options{}.parquet".format(
+        dt.year, 
+        dt.month, 
+        dt.day, 
+        dt.hour, 
+        ticker,
+        ticker,
+        dt.strftime("%Y%m%d%H%M%S%f"))
+    print("Writing {} records to {}".format(len(dataframe), output_file))
+    dataframe.to_parquet(output_file)
+    return output_file
 
 if __name__ == "__main__":
     uploadOptions("", "")

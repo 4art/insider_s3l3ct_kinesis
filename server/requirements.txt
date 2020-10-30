@@ -3,3 +3,6 @@ beautifulsoup4
 boto3
 nest_asyncio
 aiohttp
+pandas
+fsspec
+s3fs

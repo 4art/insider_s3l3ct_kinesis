@@ -14,6 +14,10 @@ package:
     - stock_screener_py/venv/**
     - stock_screener_py/env/**
     - stock_screener_py/__pycache__/**
+    - stock_screener_py/.vscode/**
+    - stock_screener_py/bin/**
+    - stock_screener_py/lib/**
+    - stock_screener_py/test/**
     - bin/**
     - lib/**
     - test/**
@@ -44,7 +48,13 @@ provider:
 
 custom:
   pythonRequirements:
+    #dockerizePip: true
     dockerizePip: non-linux
+    usePoetry: false
+    useDownloadCache: false
+    useStaticCache: false
+    invalidateCaches: false
+    slim: true
   serviceId: ${self:service}-${self:provider.stage}
   select_bucket: myinsiderposition-${self:provider.stage}
   optionsDeliveryStream: options-stream-${self:provider.stage}
@@ -169,16 +179,16 @@ functions:
     memorySize: 256
     events:
       - schedule: rate(15 minutes)
-  update_worked_proxies:
-    handler: stock_screener_py/workedProxyService.uploadWorkedProxies
-    timeout: 900
-    memorySize: 2048
-    events:
-      - schedule: rate(3 hours)
+  #update_worked_proxies:
+  #  handler: stock_screener_py/workedProxyService.uploadWorkedProxies
+  #  timeout: 900
+  #  memorySize: 2048
+  #  events:
+  #    - schedule: rate(3 hours)
   upload_options:
     handler: stock_screener_py/options_screener.uploadOptions
     timeout: 900
-    memorySize: 1024
+    memorySize: 512
     events:
       - schedule: rate(15 minutes)
   collect_stocks:
@@ -364,7 +374,7 @@ resources:
               Parameters:
                 serialization.format: '1' 
                 StoredAsSubDirectories: false 
-                PartitionKeys: '[{"Name": "year","Type": "string"},{"Name": "month","Type": "string"},{"Name": "day","Type": "string"},{"Name": "hour","Type": "string"}]'
+                PartitionKeys: '[{"Name": "year","Type": "string"},{"Name": "month","Type": "string"},{"Name": "day","Type": "string"},{"Name": "hour","Type": "string"},{"Name": "ticker","Type": "string"}]'
           TableType: EXTERNAL_TABLE  
     #MyAthenaDataCatalog:
     #  Type: AWS::Athena::DataCatalog

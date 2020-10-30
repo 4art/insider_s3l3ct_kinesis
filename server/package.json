@@ -17,13 +17,11 @@
     "serverless-s3-sync": "^1.8.0"
   },
   "dependencies": {
-    "array-chunk": "^1.0.0",
     "aws-sdk": "^2.441.0",
     "axios": "^0.19.2",
     "cfn-lambda": "^4.0.0",
-    "csvtojson": "^2.0.8",
+    "csvtojson": "^2.0.10",
     "detect-csv": "^1.1.0",
-    "lambda-tester": "^3.5.0",
     "request": "^2.88.0",
     "serverless-python-requirements": "^5.1.0",
     "underscore": "^1.9.1"

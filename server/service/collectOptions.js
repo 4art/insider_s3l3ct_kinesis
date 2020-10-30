@@ -1,6 +1,5 @@
 const { tickerOptional } = require('./stocksService');
 const proxiesService = require('./proxiesService').proxiesService;
-const arrayChunk = require('array-chunk');
 
 const axios = require('axios').default;
 const s3Service = require('./s3Service');
@@ -34,21 +33,6 @@ async function collect_options() {
             allProxies.splice(i, 1)
         }
     }
-    /*let optionsPromise = arrayChunk(stocks, allProxies.length).map(async chunk =>
-        chunk.map(v => v.Ticker).map(async (ticker, i) => {
-            let result = []
-            const proxy = { host: proxy.host, port: allProxies[i].port };
-            await get_options(ticker, proxy).then(v => {
-                if (typeof v !== 'undefined' && v) {
-                    result.push(map_option(ticker, v))
-                }
-            }
-            ).catch(err =>
-                console.error(`Failed to get options for ${ticker} with proxy: ${proxy}. Error: ${err.toString()}`))
-            return result
-        })
-    )*/
-
     let optionsPromise = stocks.map(v => v.Ticker).map(async (ticker, i) => {
         return await get_options(ticker).then(v => {
             /*if (typeof v !== 'undefined' && v) {
