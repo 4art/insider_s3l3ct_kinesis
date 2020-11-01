@@ -191,7 +191,7 @@ async def write_dataframe_to_parquet_on_s3(exp_arr, ticker):
             exp_obj['exp'], 
             output_file)
         queries.append(query)
-        print("Writing {} records to {}".format(len(dataframe), output_file))
+        #print("Writing {} records to {}".format(len(dataframe), output_file))
         dataframe.to_parquet(output_file)
         run_athena_query(query)
     return queries
