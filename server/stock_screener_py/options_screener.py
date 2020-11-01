@@ -2,25 +2,31 @@ import os
 import boto3
 import requests
 import json
-import random
 import asyncio
 import nest_asyncio
 import logging
 import aiohttp
-import datetime
 import time
-import itertools
-import pandas as pd
+from random import randint
+from functools import reduce
+from pandas import DataFrame
 from time import sleep
+from datetime import datetime
 from datetime import timezone
 from aiohttp import ClientSession
 
+#os.environ["select_bucket"] = "myinsiderposition-dev"
+BUCKET = os.getenv("select_bucket")
+#os.environ["optionsGlueDB"] = "myinsiderpositiondev"
+#os.environ["athenaOutput"] = "s3://{}/options_output".format(BUCKET)
+#os.environ["optionsGlueTable"] = "optionsdev"
+
 client = boto3.client('lambda')
 fh = boto3.client('firehose')
-
-CHUNK_SIZE = 3
-# TODO use as env variable
-QUEUE_NAME = "https://sqs.eu-central-1.amazonaws.com/763862102163/options-collect-sqs-dev"
+athena = boto3.client('athena')
+athenaDB = os.getenv("optionsGlueDB")
+optionsGlueTable = os.getenv("optionsGlueTable")
+athenaOutput = os.getenv("athenaOutput")
 nest_asyncio.apply()
 loop = asyncio.get_event_loop()
 
@@ -65,12 +71,15 @@ class Options_screener:
             input_coroutines = list(map(lambda ticker: asyncio.ensure_future(
                 self.addOption(ticker)), self.tickers))
             await asyncio.gather(*input_coroutines, return_exceptions=False)
-            urls = list(map(lambda x: write_dataframe_to_parquet_on_s3(pd.DataFrame(x["options"]), x["ticker"]), self.options))
-            
+            input_coroutines = list(map(lambda x: asyncio.ensure_future(write_dataframe_to_parquet_on_s3(
+                x["options"], x["ticker"])), self.options))
+            queries = await asyncio.gather(*input_coroutines, return_exceptions=False)
+            query = reduce(lambda x, y: x+y, queries)
+
             self.options = []
-            #records = list(
+            # records = list(
             #    map(lambda el: {'Data': el.encode()}, self.option_json))
-            #for record in chunks(records, 500):
+            # for record in chunks(records, 500):
             #    response = fh.put_record_batch(
             #        DeliveryStreamName=self.optionsDS,
             #        Records=record
@@ -85,7 +94,9 @@ class Options_screener:
         self.tickers.remove(ticker)
         print("saving options for {}, proxies size: {}, tickers size: {}".format(
             ticker, len(self.proxies), len(self.tickers)))
+        exp_options = []
         ticker_options = []
+        dt = datetime.utcnow()
         try:
             for exp in options['options']:
                 for t in options['options'][exp]:
@@ -97,16 +108,22 @@ class Options_screener:
                             "bid": float(options['options'][exp][t][strike]["b"]),
                             "mid": float(options['options'][exp][t][strike]["l"]),
                             "volume": float(options['options'][exp][t][strike]["v"]),
-                            "datetime": datetime.datetime.now(tz=timezone.utc),
+                            "datetime": dt,
+                            "year": dt.year,
+                            "month": dt.month,
+                            "day": dt.day,
+                            "hour": dt.hour,
                             "exp": exp,
                             "type": 'CALL' if t == 'c' else 'PUT'
                         }
                         ticker_options.append(option)
+                exp_options.append({"exp": exp, "options": ticker_options})
+                ticker_options = []
         finally:
-            self.options.append({"ticker": ticker, "options": ticker_options})
+            self.options.append({"ticker": ticker, "options": exp_options})
 
     async def addOption(self, ticker):
-        proxy_index = random.randint(0, len(self.proxies) - 1)
+        proxy_index = randint(0, len(self.proxies) - 1)
         #proxy = {"http": self.proxies[proxy_index], "https": self.proxies[proxy_index]}
         proxy = self.proxies[proxy_index]
         timeout = aiohttp.ClientTimeout(total=45)
@@ -137,29 +154,62 @@ def chunks(lst, n):
 
 def uploadOptions(event, context):
     print("start")
-    #if datetime.datetime.today().weekday() < 5:
-    loop.run_until_complete(Options_screener().getOptions())
+    if datetime.today().weekday() < 5:
+        loop.run_until_complete(Options_screener().getOptions())
     return '''
     {
         "status": "Successfully uploaded options"
     }
     '''
 
-
-def write_dataframe_to_parquet_on_s3(dataframe, ticker): #TODO write athena partitions by ALTER TABLE
+async def write_dataframe_to_parquet_on_s3(exp_arr, ticker):
     """ Write a dataframe to a Parquet on S3 """
-    dt = datetime.datetime.now(tz=timezone.utc)
-    output_file = "s3://myinsiderposition-dev/options/year={}/month={}/day={}/hour={}/ticker={}/{}options{}.parquet".format(
-        dt.year, 
-        dt.month, 
-        dt.day, 
-        dt.hour, 
-        ticker,
-        ticker,
-        dt.strftime("%Y%m%d%H%M%S%f"))
-    print("Writing {} records to {}".format(len(dataframe), output_file))
-    dataframe.to_parquet(output_file)
-    return output_file
+    dt = datetime.utcnow()
+    queries = []
+    for exp_obj in exp_arr:
+        dataframe = DataFrame(exp_obj['options'])
+        output_file = "s3://{}/options/year={}/month={}/day={}/hour={}/ticker={}/exp={}/{}{}{}.parquet".format(
+            BUCKET,
+            dt.year,
+            dt.month,
+            dt.day,
+            dt.hour,
+            ticker,
+            exp_obj['exp'],
+            exp_obj['exp'].replace("-", ""),
+            ticker,
+            dt.strftime("%Y%m%d%H%M%S%f"))
+        query = "ALTER TABLE {}.{} ADD PARTITION (dt = '{}', ticker = '{}', year = '{}', month = '{}', day = '{}', hour = '{}', exp = '{}') LOCATION '{}';".format(
+            athenaDB, 
+            optionsGlueTable, 
+            dt.strftime("%Y-%m-%d"), 
+            ticker, 
+            dt.year,
+            dt.month,
+            dt.day,
+            dt.hour, 
+            exp_obj['exp'], 
+            output_file)
+        queries.append(query)
+        print("Writing {} records to {}".format(len(dataframe), output_file))
+        dataframe.to_parquet(output_file)
+        run_athena_query(query)
+    return queries
+
+
+def run_athena_query(query):
+    # Execution
+    response = athena.start_query_execution(
+        QueryString=query,
+        QueryExecutionContext={
+            'Database': athenaDB,
+        },
+        ResultConfiguration={
+            'OutputLocation': athenaOutput,
+        }
+    )
+    return response
+
 
 if __name__ == "__main__":
     uploadOptions("", "")

@@ -42,8 +42,9 @@ provider:
     optionsDeliveryStream: ${self:custom.optionsDeliveryStream}
     #optionsDeliveryStreamArn: ${self:custom.optionsDeliveryStreamArn}
     insiderDBGlue: ${self:custom.insiderDBGlue}
-    optionsGluDeTable: ${self:custom.optionsGlueTable}
+    optionsGlueTable: ${self:custom.optionsGlueTable}
     optionsGlueDB: ${self:custom.optionsGlueDB}
+    athenaOutput: ${self:custom.athenaOutput}
     dataCatalog: ${self:custom.dataCatalog}
 
 custom:
@@ -62,6 +63,7 @@ custom:
   optionsCollectSqs: options-collect-sqs-${self:provider.stage}
   optionsGlueTable: options${self:provider.stage}
   optionsGlueDB: myinsiderposition${self:provider.stage}
+  athenaOutput: s3://${self:custom.select_bucket}/options_output
   dataCatalog: myinsiderpositionDataCatalog-${self:provider.stage}
   guiBucketName: gui-${self:custom.serviceId}
   siteName: myinsiderposition.com
@@ -374,7 +376,7 @@ resources:
               Parameters:
                 serialization.format: '1' 
                 StoredAsSubDirectories: false 
-                PartitionKeys: '[{"Name": "year","Type": "string"},{"Name": "month","Type": "string"},{"Name": "day","Type": "string"},{"Name": "hour","Type": "string"},{"Name": "ticker","Type": "string"}]'
+                PartitionKeys: '[{"Name": "year","Type": "string"},{"Name": "month","Type": "string"},{"Name": "day","Type": "string"},{"Name": "hour","Type": "string"},{"Name": "ticker","Type": "string"},{"Name": "exp","Type": "timestamp"}, {"Name": "datetime","Type":"timestamp"}]'
           TableType: EXTERNAL_TABLE  
     #MyAthenaDataCatalog:
     #  Type: AWS::Athena::DataCatalog
@@ -396,7 +398,7 @@ resources:
           ResultConfigurationUpdates:
             #EncryptionConfiguration:
             #  EncryptionOption: SSE_S3
-            OutputLocation: s3://${self:custom.select_bucket}/options_output
+            OutputLocation: ${self:custom.athenaOutput}
 
 #    DnsRecord:
 #      Type: "AWS::Route53::RecordSet"
