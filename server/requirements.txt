@@ -6,3 +6,5 @@ aiohttp
 pandas
 fsspec
 s3fs
+fastparquet
+pyarrow
