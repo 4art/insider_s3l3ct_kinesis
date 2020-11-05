@@ -1,7 +1,6 @@
 from aiohttp import ClientSession
 import aiohttp
 import logging
-import nest_asyncio
 import datetime
 import json
 import asyncio
@@ -41,7 +40,6 @@ class S3Service:
         s=json.dumps(j)
         return re.sub(r"\}\,\s+\{", "}\n{", s[1:-1])
 
-nest_asyncio.apply()
 loop = asyncio.get_event_loop()
 lambdaService = LambdaService()
 s3Service = S3Service()

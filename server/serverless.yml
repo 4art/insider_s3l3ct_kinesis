@@ -167,12 +167,12 @@ functions:
   #glueCustomResource:
   #  runtime: nodejs12.x
   #  handler: glueCustomResource.handler
-  collect_optional_stocks:
-    handler: stock_screener_py/stock_screener.save_all_optionable
-    timeout: 900
-    memorySize: 256
-    events:
-      - schedule: rate(7 days)
+  #collect_optional_stocks:
+  #  handler: stock_screener_py/stock_screener.save_all_optionable
+  #  timeout: 900
+  #  memorySize: 256
+  #  events:
+  #    - schedule: rate(7 days)
       #- schedule: cron(0/15 * * * MON-FRI *)
   update_all_proxies:
     runtime: nodejs12.x

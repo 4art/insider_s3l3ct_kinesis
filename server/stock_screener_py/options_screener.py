@@ -1,9 +1,7 @@
 import os
 import boto3
-import requests
 import json
 import asyncio
-import nest_asyncio
 import logging
 import aiohttp
 import time
@@ -15,11 +13,11 @@ from datetime import datetime
 from datetime import timezone
 from aiohttp import ClientSession
 
-#os.environ["select_bucket"] = "myinsiderposition-dev"
+os.environ["select_bucket"] = "myinsiderposition-dev"
 BUCKET = os.getenv("select_bucket")
-#os.environ["optionsGlueDB"] = "myinsiderpositiondev"
-#os.environ["athenaOutput"] = "s3://{}/options_output".format(BUCKET)
-#os.environ["optionsGlueTable"] = "optionsdev"
+os.environ["optionsGlueDB"] = "myinsiderpositiondev"
+os.environ["athenaOutput"] = "s3://{}/options_output".format(BUCKET)
+os.environ["optionsGlueTable"] = "optionsdev"
 
 client = boto3.client('lambda')
 fh = boto3.client('firehose')
@@ -27,7 +25,6 @@ athena = boto3.client('athena')
 athenaDB = os.getenv("optionsGlueDB")
 optionsGlueTable = os.getenv("optionsGlueTable")
 athenaOutput = os.getenv("athenaOutput")
-nest_asyncio.apply()
 loop = asyncio.get_event_loop()
 
 
@@ -73,6 +70,7 @@ class Options_screener:
             await asyncio.gather(*input_coroutines, return_exceptions=False)
             input_coroutines = list(map(lambda x: asyncio.ensure_future(write_dataframe_to_parquet_on_s3(
                 x["options"], x["ticker"])), self.options))
+            print("writing parquet to s3")
             queries = await asyncio.gather(*input_coroutines, return_exceptions=False)
             query = reduce(lambda x, y: x+y, queries)
 
