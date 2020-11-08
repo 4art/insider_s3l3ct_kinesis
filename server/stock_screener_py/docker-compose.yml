@@ -1,0 +1,16 @@
+version: '3.7'
+
+secrets:
+  aws_cred:
+    external: true
+
+services:
+  stock_screener:
+    image: registry.gitlab.com/metraf/stocks_screener:latest
+    environment:
+        athenaDB: myinsiderpositiondev
+        stocksGlueTable: stocksdev
+    secrets:
+    - source: aws_cred
+      target: /usr/src/app/aws_cred.json
+      
