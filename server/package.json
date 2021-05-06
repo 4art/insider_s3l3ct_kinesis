@@ -24,6 +24,6 @@
     "detect-csv": "^1.1.0",
     "request": "^2.88.0",
     "serverless-python-requirements": "^5.1.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.12.1"
   }
 }
